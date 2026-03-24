@@ -231,6 +231,7 @@ const styles = StyleSheet.create({
   statsScroll: {
     marginHorizontal: -16,
     paddingHorizontal: 16,
+    paddingVertical: 16,
   },
   categoryBreakdown: {
     backgroundColor: "#FFFFFF",

@@ -294,4 +294,8 @@ For issues or questions:
 
 ---
 
+## 📱 EAS Workflow
+
+1. **Run**: npx eas-cli@latest workflow:run create-production-builds.yml
+
 **Happy expense tracking with Gasto! 💸**

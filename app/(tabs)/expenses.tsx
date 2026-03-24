@@ -3,24 +3,28 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 type FilterType = "all" | "week" | "month" | "year";
 
+const ITEMS_PER_PAGE = 10;
+
 export default function ExpenseListScreen() {
   const { expenses, categories, deleteExpense, refreshData } = useExpenses();
   const [filterType, setFilterType] = useState<FilterType>("month");
+  const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       refreshData();
+      setDisplayCount(ITEMS_PER_PAGE);
     }, [refreshData]),
   );
 
@@ -46,10 +50,14 @@ export default function ExpenseListScreen() {
     return expenses.filter((expense) => new Date(expense.date) >= startDate);
   }, [expenses, filterType]);
 
-  const groupedExpenses = useMemo(() => {
-    const grouped: Record<string, typeof expenses> = {};
+  const paginatedExpenses = useMemo(() => {
+    return filteredExpenses.slice(0, displayCount);
+  }, [filteredExpenses, displayCount]);
 
-    filteredExpenses.forEach((expense) => {
+  const groupedExpenses = useMemo(() => {
+    const grouped: Record<string, typeof paginatedExpenses> = {};
+
+    paginatedExpenses.forEach((expense) => {
       const date = new Date(expense.date).toLocaleDateString("en-US", {
         weekday: "long",
         year: "numeric",
@@ -64,7 +72,7 @@ export default function ExpenseListScreen() {
     });
 
     return grouped;
-  }, [filteredExpenses]);
+  }, [paginatedExpenses]);
 
   const getCategoryData = (categoryName: string) => {
     return categories.find((cat) => cat.name === categoryName);
@@ -73,6 +81,14 @@ export default function ExpenseListScreen() {
   const handleDeleteExpense = (id: string) => {
     deleteExpense(id);
   };
+
+  const handleLoadMore = useCallback(() => {
+    if (displayCount < filteredExpenses.length) {
+      setDisplayCount((prev) =>
+        Math.min(prev + ITEMS_PER_PAGE, filteredExpenses.length),
+      );
+    }
+  }, [displayCount, filteredExpenses.length]);
 
   const renderSection = (date: string) => (
     <View key={date}>
@@ -133,8 +149,10 @@ export default function ExpenseListScreen() {
             )}
             renderItem={({ item }) => renderSection(item)}
             keyExtractor={(item) => item}
-            scrollEnabled={false}
+            scrollEnabled={true}
             contentContainerStyle={styles.listContent}
+            onEndReached={handleLoadMore}
+            onEndReachedThreshold={0.5}
           />
         ) : (
           <View style={styles.emptyState}>
