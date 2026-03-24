@@ -3,8 +3,10 @@ import StatCard from "@/components/StatCard";
 import { useExpenses } from "@/hooks/useExpenses";
 import { formatAmount, formatCurrency } from "@/utils/currency";
 import { useFocusEffect } from "@react-navigation/native";
+import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import {
+  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,6 +18,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function HomeScreen() {
   const { expenses, categories, getStatistics, deleteExpense, refreshData } =
     useExpenses();
+  const router = useRouter();
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -32,7 +35,22 @@ export default function HomeScreen() {
   };
 
   const handleDeleteExpense = (id: string) => {
-    deleteExpense(id);
+    Alert.alert(
+      "Delete Expense",
+      "Are you sure you want to delete this expense?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: () => deleteExpense(id),
+          style: "destructive",
+        },
+      ],
+    );
   };
 
   return (
@@ -141,7 +159,7 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Expenses</Text>
             {recentExpenses.length > 0 && (
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => router.push("expenses")}>
                 <Text style={styles.seeAllLink}>See All</Text>
               </TouchableOpacity>
             )}
@@ -152,7 +170,6 @@ export default function HomeScreen() {
                 key={expense.id}
                 expense={expense}
                 category={getCategoryData(expense.category)}
-                onDeletePress={() => handleDeleteExpense(expense.id)}
               />
             ))
           ) : (

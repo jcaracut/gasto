@@ -3,6 +3,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -79,7 +80,22 @@ export default function ExpenseListScreen() {
   };
 
   const handleDeleteExpense = (id: string) => {
-    deleteExpense(id);
+    Alert.alert(
+      "Delete Expense",
+      "Are you sure you want to delete this expense?",
+      [
+        {
+          text: "Cancel",
+          onPress: () => {},
+          style: "cancel",
+        },
+        {
+          text: "Delete",
+          onPress: () => deleteExpense(id),
+          style: "destructive",
+        },
+      ],
+    );
   };
 
   const handleLoadMore = useCallback(() => {
