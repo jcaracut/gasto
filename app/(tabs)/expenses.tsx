@@ -3,12 +3,12 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-  Alert,
-  FlatList,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -17,7 +17,8 @@ type FilterType = "all" | "week" | "month" | "year";
 const ITEMS_PER_PAGE = 10;
 
 export default function ExpenseListScreen() {
-  const { expenses, categories, deleteExpense, refreshData } = useExpenses();
+  const { expenses, categories, currentSpaceId, deleteExpense, refreshData } =
+    useExpenses();
   const [filterType, setFilterType] = useState<FilterType>("month");
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
 
@@ -30,6 +31,11 @@ export default function ExpenseListScreen() {
   );
 
   const filteredExpenses = useMemo(() => {
+    // Filter by current space first
+    const spaceExpenses = expenses.filter(
+      (exp) => exp.spaceId === currentSpaceId,
+    );
+
     const now = new Date();
     let startDate = new Date();
 
@@ -45,11 +51,13 @@ export default function ExpenseListScreen() {
         break;
       case "all":
       default:
-        return expenses;
+        return spaceExpenses;
     }
 
-    return expenses.filter((expense) => new Date(expense.date) >= startDate);
-  }, [expenses, filterType]);
+    return spaceExpenses.filter(
+      (expense) => new Date(expense.date) >= startDate,
+    );
+  }, [expenses, currentSpaceId, filterType]);
 
   const paginatedExpenses = useMemo(() => {
     return filteredExpenses.slice(0, displayCount);

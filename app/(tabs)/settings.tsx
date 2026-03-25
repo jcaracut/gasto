@@ -1,3 +1,5 @@
+import SpaceManager from "@/components/SpaceManager";
+import { useExpenses } from "@/hooks/useExpenses";
 import React, { useState } from "react";
 import {
     Alert,
@@ -13,6 +15,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function SettingsScreen() {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
+  const {
+    spaces,
+    currentSpaceId,
+    createSpace,
+    deleteSpace,
+    renameSpace,
+    archiveSpace,
+    switchSpace,
+  } = useExpenses();
 
   const handleClearData = () => {
     Alert.alert(
@@ -43,6 +54,17 @@ export default function SettingsScreen() {
         <View style={styles.header}>
           <Text style={styles.title}>Settings</Text>
         </View>
+
+        {/* Spaces Management */}
+        <SpaceManager
+          spaces={spaces}
+          currentSpaceId={currentSpaceId}
+          onCreateSpace={createSpace}
+          onDeleteSpace={deleteSpace}
+          onRenameSpace={renameSpace}
+          onArchiveSpace={archiveSpace}
+          onSwitchSpace={switchSpace}
+        />
 
         {/* App Settings */}
         <View style={styles.section}>

@@ -5,6 +5,7 @@ export interface Expense {
   description: string;
   date: string; // ISO format
   paymentMethod: "cash" | "card" | "digital" | "other";
+  spaceId: string; // Link to the space this expense belongs to
 }
 
 export interface Category {
@@ -12,6 +13,15 @@ export interface Category {
   name: string;
   icon: string;
   color: string;
+}
+
+export interface Space {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  isArchived: boolean;
+  createdDate: string; // ISO format
 }
 
 export interface Budget {

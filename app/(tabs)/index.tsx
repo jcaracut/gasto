@@ -6,7 +6,6 @@ import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback } from "react";
 import {
-  Alert,
   ScrollView,
   StyleSheet,
   Text,
@@ -16,7 +15,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const { expenses, categories, getStatistics, deleteExpense, refreshData } =
+  const { expenses, categories, currentSpaceId, getStatistics, refreshData } =
     useExpenses();
   const router = useRouter();
 
@@ -28,29 +27,13 @@ export default function HomeScreen() {
   );
 
   const stats = getStatistics();
-  const recentExpenses = expenses.slice(0, 5);
+  // Filter expenses by current space and get the 5 most recent
+  const recentExpenses = expenses
+    .filter((exp) => exp.spaceId === currentSpaceId)
+    .slice(0, 5);
 
   const getCategoryData = (categoryName: string) => {
     return categories.find((cat) => cat.name === categoryName);
-  };
-
-  const handleDeleteExpense = (id: string) => {
-    Alert.alert(
-      "Delete Expense",
-      "Are you sure you want to delete this expense?",
-      [
-        {
-          text: "Cancel",
-          onPress: () => {},
-          style: "cancel",
-        },
-        {
-          text: "Delete",
-          onPress: () => deleteExpense(id),
-          style: "destructive",
-        },
-      ],
-    );
   };
 
   return (
@@ -137,7 +120,7 @@ export default function HomeScreen() {
                           style={[
                             styles.progressFill,
                             {
-                              width: `${percentage}%`,
+                              width: `${percentage}%` as any,
                               backgroundColor: categoryData?.color,
                             },
                           ]}
@@ -159,7 +142,7 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Recent Expenses</Text>
             {recentExpenses.length > 0 && (
-              <TouchableOpacity onPress={() => router.push("expenses")}>
+              <TouchableOpacity onPress={() => router.push("/(tabs)/expenses")}>
                 <Text style={styles.seeAllLink}>See All</Text>
               </TouchableOpacity>
             )}
