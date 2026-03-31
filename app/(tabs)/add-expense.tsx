@@ -1,23 +1,23 @@
 import CategorySelector from "@/components/CategorySelector";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
-    Alert,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AddExpenseScreen() {
   const router = useRouter();
-  const { addExpense, categories } = useExpenses();
+  const { addExpense, categories, currentSpaceId, spaces } = useExpenses();
 
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -25,7 +25,18 @@ export default function AddExpenseScreen() {
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "card" | "digital" | "other"
   >("card");
+  const [selectedSpaceId, setSelectedSpaceId] =
+    useState<string>(currentSpaceId);
   const [loading, setLoading] = useState(false);
+
+  const currentSpace = spaces.find((s) => s.id === currentSpaceId);
+  const selectedSpace = spaces.find((s) => s.id === selectedSpaceId);
+  const activeSpaces = spaces.filter((s) => !s.isArchived);
+
+  // Sync selectedSpaceId with currentSpaceId whenever current space changes
+  useEffect(() => {
+    setSelectedSpaceId(currentSpaceId);
+  }, [currentSpaceId]);
 
   const handleAddExpense = async () => {
     if (!amount || !selectedCategory || !description.trim()) {
@@ -41,13 +52,16 @@ export default function AddExpenseScreen() {
 
     try {
       setLoading(true);
-      await addExpense({
-        amount: parsedAmount,
-        category: selectedCategory,
-        description: description.trim(),
-        date: new Date().toISOString(),
-        paymentMethod,
-      });
+      await addExpense(
+        {
+          amount: parsedAmount,
+          category: selectedCategory,
+          description: description.trim(),
+          date: new Date().toISOString(),
+          paymentMethod,
+        },
+        selectedSpaceId,
+      );
 
       Alert.alert("Success", "Expense added successfully!", [
         {
@@ -57,6 +71,7 @@ export default function AddExpenseScreen() {
             setDescription("");
             setSelectedCategory(null);
             setPaymentMethod("card");
+            setSelectedSpaceId(currentSpaceId);
             router.back();
           },
         },
@@ -82,6 +97,35 @@ export default function AddExpenseScreen() {
             </TouchableOpacity>
             <Text style={styles.title}>Add Expense</Text>
             <View style={styles.placeholder} />
+          </View>
+
+          {/* Space Selection */}
+          <View style={styles.section}>
+            <Text style={styles.label}>Select Space</Text>
+            <View style={styles.spaceSelectorContainer}>
+              {activeSpaces.map((space) => (
+                <TouchableOpacity
+                  key={space.id}
+                  style={[
+                    styles.spaceSelectorButton,
+                    selectedSpaceId === space.id &&
+                      styles.spaceSelectorButtonActive,
+                  ]}
+                  onPress={() => setSelectedSpaceId(space.id)}
+                >
+                  <Text style={styles.spaceSelectorIcon}>{space.icon}</Text>
+                  <Text
+                    style={[
+                      styles.spaceSelectorText,
+                      selectedSpaceId === space.id &&
+                        styles.spaceSelectorTextActive,
+                    ]}
+                  >
+                    {space.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
 
           {/* Amount Input */}
@@ -206,6 +250,42 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 50,
+  },
+  spaceSelectorContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -8,
+  },
+  spaceSelectorButton: {
+    width: "45%",
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    marginHorizontal: 8,
+    marginVertical: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#EFEFEF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  spaceSelectorButtonActive: {
+    borderColor: "#FF6B6B",
+    backgroundColor: "#FFF5F5",
+  },
+  spaceSelectorIcon: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  spaceSelectorText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#999",
+    textAlign: "center",
+  },
+  spaceSelectorTextActive: {
+    color: "#FF6B6B",
+    fontWeight: "700",
   },
   section: {
     paddingHorizontal: 16,

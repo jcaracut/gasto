@@ -3,16 +3,17 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
-    Alert,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-type FilterType = "all" | "week" | "month" | "year";
+type FilterType = "all" | "week" | "month" | "year" | "specific-month";
 
 const ITEMS_PER_PAGE = 10;
 
@@ -21,6 +22,11 @@ export default function ExpenseListScreen() {
     useExpenses();
   const [filterType, setFilterType] = useState<FilterType>("month");
   const [displayCount, setDisplayCount] = useState(ITEMS_PER_PAGE);
+
+  // For specific month filter
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -38,26 +44,39 @@ export default function ExpenseListScreen() {
 
     const now = new Date();
     let startDate = new Date();
+    let endDate = new Date(now.getFullYear(), 11, 31);
 
     switch (filterType) {
       case "week":
         startDate.setDate(now.getDate() - 7);
+        endDate = new Date();
         break;
       case "month":
-        startDate.setMonth(now.getMonth() - 1);
+        // Get the first day of this month
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date();
         break;
       case "year":
-        startDate.setFullYear(now.getFullYear() - 1);
+        // Get the first day of this year
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date();
+        break;
+      case "specific-month":
+        // Get the first day of selected month
+        startDate = new Date(selectedYear, selectedMonth, 1);
+        // Get the last day of selected month
+        endDate = new Date(selectedYear, selectedMonth + 1, 0);
         break;
       case "all":
       default:
         return spaceExpenses;
     }
 
-    return spaceExpenses.filter(
-      (expense) => new Date(expense.date) >= startDate,
-    );
-  }, [expenses, currentSpaceId, filterType]);
+    return spaceExpenses.filter((expense) => {
+      const expDate = new Date(expense.date);
+      return expDate >= startDate && expDate <= endDate;
+    });
+  }, [expenses, currentSpaceId, filterType, selectedMonth, selectedYear]);
 
   const paginatedExpenses = useMemo(() => {
     return filteredExpenses.slice(0, displayCount);
@@ -136,33 +155,81 @@ export default function ExpenseListScreen() {
       </View>
 
       {/* Filter Buttons */}
-      <View style={styles.filterContainer}>
-        {(["all", "week", "month", "year"] as const).map((filter) => (
-          <TouchableOpacity
-            key={filter}
-            style={[
-              styles.filterButton,
-              filterType === filter && styles.filterButtonActive,
-            ]}
-            onPress={() => setFilterType(filter)}
-          >
-            <Text
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+      >
+        {(["all", "week", "month", "year", "specific-month"] as const).map(
+          (filter) => (
+            <TouchableOpacity
+              key={filter}
               style={[
-                styles.filterButtonText,
-                filterType === filter && styles.filterButtonTextActive,
+                styles.filterButton,
+                filterType === filter && styles.filterButtonActive,
               ]}
+              onPress={() => setFilterType(filter)}
             >
-              {filter === "all"
-                ? "All Time"
-                : filter === "week"
-                  ? "This Week"
-                  : filter === "month"
-                    ? "This Month"
-                    : "This Year"}
-            </Text>
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  filterType === filter && styles.filterButtonTextActive,
+                ]}
+              >
+                {filter === "all"
+                  ? "All Time"
+                  : filter === "week"
+                    ? "This Week"
+                    : filter === "month"
+                      ? "This Month"
+                      : filter === "year"
+                        ? "This Year"
+                        : "Pick Month"}
+              </Text>
+            </TouchableOpacity>
+          ),
+        )}
+      </ScrollView>
+
+      {/* Month/Year Picker for Specific Month Filter */}
+      {filterType === "specific-month" && (
+        <View style={styles.monthPickerContainer}>
+          <TouchableOpacity
+            style={styles.monthNavButton}
+            onPress={() => {
+              if (selectedMonth === 0) {
+                setSelectedMonth(11);
+                setSelectedYear(selectedYear - 1);
+              } else {
+                setSelectedMonth(selectedMonth - 1);
+              }
+            }}
+          >
+            <Text style={styles.monthNavButtonText}>← Prev</Text>
           </TouchableOpacity>
-        ))}
-      </View>
+
+          <Text style={styles.monthDisplay}>
+            {new Date(selectedYear, selectedMonth).toLocaleDateString("en-US", {
+              month: "long",
+              year: "numeric",
+            })}
+          </Text>
+
+          <TouchableOpacity
+            style={styles.monthNavButton}
+            onPress={() => {
+              if (selectedMonth === 11) {
+                setSelectedMonth(0);
+                setSelectedYear(selectedYear + 1);
+              } else {
+                setSelectedMonth(selectedMonth + 1);
+              }
+            }}
+          >
+            <Text style={styles.monthNavButtonText}>Next →</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Expenses List */}
       <View style={styles.content}>
@@ -209,22 +276,22 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#333",
   },
-  filterContainer: {
-    flexDirection: "row",
+  filterScroll: {
+    maxHeight: 50,
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
   },
   filterButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     marginRight: 8,
-    borderRadius: 20,
+    borderRadius: 8,
     borderWidth: 1,
     borderColor: "#EFEFEF",
     backgroundColor: "#FFFFFF",
+    minWidth: 80,
+    minHeight: 32,
+    alignItems: "center",
   },
   filterButtonActive: {
     borderColor: "#FF6B6B",
@@ -238,6 +305,34 @@ const styles = StyleSheet.create({
   filterButtonTextActive: {
     color: "#FF6B6B",
     fontWeight: "600",
+  },
+  monthPickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: "#F0F8FF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E0EFFF",
+  },
+  monthNavButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+  },
+  monthNavButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FF6B6B",
+  },
+  monthDisplay: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
   },
   content: {
     flex: 1,

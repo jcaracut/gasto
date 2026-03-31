@@ -4,7 +4,7 @@ import { useExpenses } from "@/hooks/useExpenses";
 import { formatAmount, formatCurrency } from "@/utils/currency";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useCallback } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -14,10 +14,18 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+type FilterType = "all" | "week" | "month" | "year" | "specific-month";
+
 export default function HomeScreen() {
   const { expenses, categories, currentSpaceId, getStatistics, refreshData } =
     useExpenses();
   const router = useRouter();
+  const [filterType, setFilterType] = useState<FilterType>("month");
+
+  // For specific month filter
+  const today = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(today.getMonth());
+  const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
   // Refresh data when screen comes into focus
   useFocusEffect(
@@ -26,11 +34,102 @@ export default function HomeScreen() {
     }, [refreshData]),
   );
 
-  const stats = getStatistics();
-  // Filter expenses by current space and get the 5 most recent
-  const recentExpenses = expenses
-    .filter((exp) => exp.spaceId === currentSpaceId)
-    .slice(0, 5);
+  // Filter expenses based on time period and current space
+  const filteredExpenses = useMemo(() => {
+    const spaceExpenses = expenses.filter(
+      (exp) => exp.spaceId === currentSpaceId,
+    );
+
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date(now.getFullYear(), 11, 31); // Default to end of year
+
+    switch (filterType) {
+      case "week":
+        // Get the start of this week (7 days ago)
+        startDate.setDate(now.getDate() - 7);
+        endDate = new Date();
+        break;
+      case "month":
+        // Get the first day of this month
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        endDate = new Date();
+        break;
+      case "year":
+        // Get the first day of this year
+        startDate = new Date(now.getFullYear(), 0, 1);
+        endDate = new Date();
+        break;
+      case "specific-month":
+        // Get the first day of selected month
+        startDate = new Date(selectedYear, selectedMonth, 1);
+        // Get the last day of selected month
+        endDate = new Date(selectedYear, selectedMonth + 1, 0);
+        break;
+      case "all":
+      default:
+        return spaceExpenses;
+    }
+
+    return spaceExpenses.filter((expense) => {
+      const expDate = new Date(expense.date);
+      return expDate >= startDate && expDate <= endDate;
+    });
+  }, [expenses, currentSpaceId, filterType, selectedMonth, selectedYear]);
+
+  // Calculate stats for filtered period
+  const filteredStats = useMemo(() => {
+    const totalExpenses = filteredExpenses.reduce(
+      (sum, exp) => sum + exp.amount,
+      0,
+    );
+    const averageByCategory: Record<string, number> = {};
+    let highestAmount = 0;
+    let highestCategory = "";
+
+    filteredExpenses.forEach((exp) => {
+      if (!averageByCategory[exp.category]) {
+        averageByCategory[exp.category] = 0;
+      }
+      averageByCategory[exp.category] += exp.amount;
+      if (averageByCategory[exp.category] > highestAmount) {
+        highestAmount = averageByCategory[exp.category];
+        highestCategory = exp.category;
+      }
+    });
+
+    return {
+      totalExpenses,
+      averageByCategory,
+      highestCategory,
+      highestAmount,
+      expenseCount: filteredExpenses.length,
+    };
+  }, [filteredExpenses]);
+
+  // Get 5 most recent filtered expenses
+  const recentExpenses = filteredExpenses.slice(0, 5);
+
+  const getFilterLabel = (): string => {
+    switch (filterType) {
+      case "week":
+        return "This Week";
+      case "month":
+        return "This Month";
+      case "year":
+        return "This Year";
+      case "specific-month":
+        const monthName = new Date(
+          selectedYear,
+          selectedMonth,
+        ).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        return monthName;
+      case "all":
+        return "All Time";
+      default:
+        return "This Month";
+    }
+  };
 
   const getCategoryData = (categoryName: string) => {
     return categories.find((cat) => cat.name === categoryName);
@@ -58,7 +157,88 @@ export default function HomeScreen() {
 
         {/* Main Stats */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>This Month</Text>
+          <Text style={styles.sectionTitle}>{getFilterLabel()}</Text>
+
+          {/* Filter Buttons */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterScroll}
+          >
+            {(["all", "week", "month", "year", "specific-month"] as const).map(
+              (filter) => (
+                <TouchableOpacity
+                  key={filter}
+                  style={[
+                    styles.filterButton,
+                    filterType === filter && styles.filterButtonActive,
+                  ]}
+                  onPress={() => setFilterType(filter)}
+                >
+                  <Text
+                    style={[
+                      styles.filterButtonText,
+                      filterType === filter && styles.filterButtonTextActive,
+                    ]}
+                  >
+                    {filter === "all"
+                      ? "All Time"
+                      : filter === "week"
+                        ? "This Week"
+                        : filter === "month"
+                          ? "This Month"
+                          : filter === "year"
+                            ? "This Year"
+                            : "Pick Month"}
+                  </Text>
+                </TouchableOpacity>
+              ),
+            )}
+          </ScrollView>
+
+          {/* Month/Year Picker for Specific Month Filter */}
+          {filterType === "specific-month" && (
+            <View style={styles.monthPickerContainer}>
+              <TouchableOpacity
+                style={styles.monthNavButton}
+                onPress={() => {
+                  if (selectedMonth === 0) {
+                    setSelectedMonth(11);
+                    setSelectedYear(selectedYear - 1);
+                  } else {
+                    setSelectedMonth(selectedMonth - 1);
+                  }
+                }}
+              >
+                <Text style={styles.monthNavButtonText}>← Prev</Text>
+              </TouchableOpacity>
+
+              <Text style={styles.monthDisplay}>
+                {new Date(selectedYear, selectedMonth).toLocaleDateString(
+                  "en-US",
+                  {
+                    month: "long",
+                    year: "numeric",
+                  },
+                )}
+              </Text>
+
+              <TouchableOpacity
+                style={styles.monthNavButton}
+                onPress={() => {
+                  if (selectedMonth === 11) {
+                    setSelectedMonth(0);
+                    setSelectedYear(selectedYear + 1);
+                  } else {
+                    setSelectedMonth(selectedMonth + 1);
+                  }
+                }}
+              >
+                <Text style={styles.monthNavButtonText}>Next →</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -66,24 +246,25 @@ export default function HomeScreen() {
           >
             <StatCard
               label="Total Spent"
-              value={formatCurrency(stats.totalExpenses)}
+              value={formatCurrency(filteredStats.totalExpenses)}
               icon="💰"
               color="#FF6B6B"
               backgroundColor="#FFF5F5"
             />
             <StatCard
               label="Transactions"
-              value={stats.expenseCount}
+              value={filteredStats.expenseCount}
               icon="📊"
               color="#4ECDC4"
               backgroundColor="#F0FFFE"
             />
             <StatCard
               label="Top Category"
-              value={formatCurrency(stats.highestAmount)}
+              value={formatCurrency(filteredStats.highestAmount)}
               icon={
-                categories.find((cat) => cat.name === stats.highestCategory)
-                  ?.icon || "📌"
+                categories.find(
+                  (cat) => cat.name === filteredStats.highestCategory,
+                )?.icon || "📌"
               }
               color="#95E1D3"
               backgroundColor="#F5FFFE"
@@ -97,12 +278,12 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>Spending by Category</Text>
           </View>
           <View style={styles.categoryBreakdown}>
-            {Object.entries(stats.averageByCategory).map(
+            {Object.entries(filteredStats.averageByCategory).map(
               ([categoryName, amount]) => {
                 const categoryData = getCategoryData(categoryName);
                 const percentage =
-                  stats.totalExpenses > 0
-                    ? ((amount / stats.totalExpenses) * 100).toFixed(0)
+                  filteredStats.totalExpenses > 0
+                    ? ((amount / filteredStats.totalExpenses) * 100).toFixed(0)
                     : "0";
                 return (
                   <View key={categoryName} style={styles.categoryRow}>
@@ -232,6 +413,65 @@ const styles = StyleSheet.create({
     marginHorizontal: -16,
     paddingHorizontal: 16,
     paddingVertical: 16,
+  },
+  filterScroll: {
+    marginHorizontal: -16,
+    paddingHorizontal: 16,
+    marginVertical: 12,
+  },
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginRight: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#EFEFEF",
+    backgroundColor: "#FFFFFF",
+    minWidth: 80,
+    alignItems: "center",
+  },
+  filterButtonActive: {
+    borderColor: "#FF6B6B",
+    backgroundColor: "#FFF5F5",
+  },
+  filterButtonText: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "#999",
+  },
+  filterButtonTextActive: {
+    color: "#FF6B6B",
+    fontWeight: "600",
+  },
+  monthPickerContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F0F8FF",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: "#E0EFFF",
+  },
+  monthNavButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#FF6B6B",
+  },
+  monthNavButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FF6B6B",
+  },
+  monthDisplay: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#333",
   },
   categoryBreakdown: {
     backgroundColor: "#FFFFFF",

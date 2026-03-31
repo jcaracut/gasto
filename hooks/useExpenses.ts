@@ -154,14 +154,14 @@ export const useExpenses = () => {
     loadData();
   }, [loadData]);
 
-  // Add expense (auto-injects current space)
+  // Add expense (auto-injects current space, or use provided spaceId)
   const addExpense = useCallback(
-    async (expense: Omit<Expense, "id" | "spaceId">) => {
+    async (expense: Omit<Expense, "id" | "spaceId">, spaceId?: string) => {
       try {
         const newExpense: Expense = {
           ...expense,
           id: generateId(),
-          spaceId: currentSpaceId,
+          spaceId: spaceId || currentSpaceId,
         };
         const updatedExpenses = [newExpense, ...expenses];
         setExpenses(updatedExpenses);
