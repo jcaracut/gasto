@@ -1,7 +1,10 @@
 import ExpenseItem from "@/components/ExpenseItem";
 import StatCard from "@/components/StatCard";
+import { useAssetPrices } from "@/hooks/useAssetPrices";
 import { useExpenses } from "@/hooks/useExpenses";
+import { forecastMonthlySpending } from "@/utils/ai-heuristics";
 import { formatAmount, formatCurrency } from "@/utils/currency";
+import { getInflationTrend } from "@/utils/inflation";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -17,8 +20,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 type FilterType = "all" | "week" | "month" | "year" | "specific-month";
 
 export default function HomeScreen() {
-  const { expenses, categories, currentSpaceId, getStatistics, refreshData } =
-    useExpenses();
+  const { expenses, categories, currentSpaceId, refreshData } = useExpenses();
+  const { prices: assetPrices, syncPrices } = useAssetPrices();
   const router = useRouter();
   const [filterType, setFilterType] = useState<FilterType>("month");
 
@@ -31,7 +34,9 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshData();
-    }, [refreshData]),
+      // Attempt to sync prices on focus
+      syncPrices();
+    }, [refreshData, syncPrices]),
   );
 
   // Filter expenses based on time period and current space
@@ -134,6 +139,26 @@ export default function HomeScreen() {
   const getCategoryData = (categoryName: string) => {
     return categories.find((cat) => cat.name === categoryName);
   };
+
+  // Calculate AI insights
+  const aiInsights = useMemo(() => {
+    const spaceExpenses = expenses.filter(
+      (exp) => exp.spaceId === currentSpaceId,
+    );
+
+    if (spaceExpenses.length === 0) {
+      return null;
+    }
+
+    const inflationTrend = getInflationTrend();
+    const spendingForecast = forecastMonthlySpending(spaceExpenses, true);
+
+    return {
+      inflationTrend,
+      spendingForecast,
+      assetPrices,
+    };
+  }, [expenses, currentSpaceId, assetPrices]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -271,6 +296,81 @@ export default function HomeScreen() {
             />
           </ScrollView>
         </View>
+
+        {/* AI Insights Widget */}
+        {aiInsights && (
+          <View style={styles.section}>
+            <View style={styles.aiWidgetHeader}>
+              <Text style={styles.sectionTitle}>🤖 AI Insights</Text>
+              <TouchableOpacity
+                onPress={() => router.push("/(tabs)/ai-insights")}
+              >
+                <Text style={styles.seeAllLink}>More</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.aiWidgetContainer}>
+              {/* Inflation Card */}
+              <View style={styles.aiCard}>
+                <Text style={styles.aiCardLabel}>Inflation Rate</Text>
+                <Text style={styles.aiCardValue}>
+                  {aiInsights.inflationTrend.currentRate}%
+                </Text>
+                <Text style={styles.aiCardTrend}>
+                  Trend: {aiInsights.inflationTrend.trend.toUpperCase()} (
+                  {aiInsights.inflationTrend.monthChangePercent > 0 ? "+" : ""}
+                  {aiInsights.inflationTrend.monthChangePercent.toFixed(1)}%)
+                </Text>
+              </View>
+
+              {/* Forecast Card */}
+              <View style={styles.aiCard}>
+                <Text style={styles.aiCardLabel}>Next Month Est.</Text>
+                <Text style={styles.aiCardValue}>
+                  ₱
+                  {aiInsights.spendingForecast.predictedAmount.toLocaleString()}
+                </Text>
+                <Text style={styles.aiCardTrend}>
+                  Confidence:{" "}
+                  {Math.round(aiInsights.spendingForecast.confidence * 100)}%
+                </Text>
+              </View>
+
+              {/* Bitcoin Price Card */}
+              {aiInsights.assetPrices.BTC && (
+                <View style={styles.aiCard}>
+                  <Text style={styles.aiCardLabel}>Bitcoin</Text>
+                  <Text style={styles.aiCardValue}>
+                    ₱{aiInsights.assetPrices.BTC.price.toLocaleString()}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.aiCardTrend,
+                      {
+                        color:
+                          aiInsights.assetPrices.BTC.change > 0
+                            ? "#4CAF50"
+                            : "#FF6B6B",
+                      },
+                    ]}
+                  >
+                    {aiInsights.assetPrices.BTC.change > 0 ? "+" : ""}
+                    {aiInsights.assetPrices.BTC.change.toFixed(2)}%
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={styles.aiCTA}
+              onPress={() => router.push("/(tabs)/ai-insights")}
+            >
+              <Text style={styles.aiCTAText}>
+                💡 Get Asset Rotation Suggestions →
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Category Breakdown */}
         <View style={styles.section}>
@@ -530,5 +630,53 @@ const styles = StyleSheet.create({
   },
   bottomPadding: {
     height: 60,
+  },
+  aiWidgetHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  aiWidgetContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+    gap: 8,
+  },
+  aiCard: {
+    flex: 1,
+    backgroundColor: "#667eea",
+    borderRadius: 12,
+    padding: 12,
+    justifyContent: "center",
+  },
+  aiCardLabel: {
+    fontSize: 11,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 4,
+    fontWeight: "500",
+  },
+  aiCardValue: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  aiCardTrend: {
+    fontSize: 10,
+    color: "rgba(255, 255, 255, 0.8)",
+    fontStyle: "italic",
+  },
+  aiCTA: {
+    backgroundColor: "#667eea",
+    borderRadius: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    alignItems: "center",
+  },
+  aiCTAText: {
+    color: "#FFFFFF",
+    fontWeight: "600",
+    fontSize: 13,
   },
 });
