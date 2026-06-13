@@ -1,7 +1,8 @@
+import { AntDesign } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { ThemeColors } from "@/constants/theme";
-import { useThemedStyles } from "@/contexts/ThemeContext";
+import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { Category, Expense } from "../types/expense";
 import { formatAmount } from "../utils/currency";
 
@@ -19,6 +20,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
   onDeletePress,
 }) => {
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   const date = new Date(expense.date);
   const formattedDate = date.toLocaleDateString("en-US", {
@@ -56,7 +58,7 @@ const ExpenseItem: React.FC<ExpenseItemProps> = ({
         </View>
         {onDeletePress && (
           <TouchableOpacity onPress={onDeletePress} style={styles.deleteButton}>
-            <Text style={styles.deleteButtonText}>✕</Text>
+            <AntDesign name="close" size={16} color={colors.textMuted} />
           </TouchableOpacity>
         )}
       </View>
@@ -126,10 +128,6 @@ const makeStyles = (c: ThemeColors) =>
     },
     deleteButton: {
       padding: 8,
-    },
-    deleteButtonText: {
-      fontSize: 16,
-      color: c.textMuted,
     },
   });
 

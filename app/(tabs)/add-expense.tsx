@@ -5,8 +5,9 @@ import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useIncome } from "@/hooks/useIncome";
 import { IncomeSource } from "@/types/expense";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { AntDesign } from "@expo/vector-icons";
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
@@ -24,7 +25,7 @@ type Mode = "expense" | "income";
 
 export default function AddScreen() {
   const router = useRouter();
-  const { addExpense, categories, currentSpaceId, spaces } = useExpenses();
+  const { addExpense, categories, currentSpaceId, spaces, refreshData } = useExpenses();
   const { addIncome } = useIncome();
   const { colors } = useTheme();
   const styles = useThemedStyles(makeStyles);
@@ -48,6 +49,13 @@ export default function AddScreen() {
   const [incomeSource, setIncomeSource] = useState<IncomeSource>("Salary");
 
   const activeSpaces = spaces.filter((s) => !s.isArchived);
+
+  // Reload spaces (and default selection) each time the tab comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refreshData();
+    }, [refreshData]),
+  );
 
   // Sync selectedSpaceId with currentSpaceId whenever current space changes
   useEffect(() => {
@@ -130,8 +138,12 @@ export default function AddScreen() {
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => router.back()}>
-              <Text style={styles.backButton}>← Back</Text>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => router.back()}
+            >
+              <AntDesign name="arrow-left" size={18} color={colors.primary} />
+              <Text style={styles.backButtonText}>Back</Text>
             </TouchableOpacity>
             <Text style={styles.title}>
               {mode === "expense" ? "Add Expense" : "Add Income"}
@@ -285,34 +297,40 @@ export default function AddScreen() {
             <View style={styles.section}>
               <Text style={styles.label}>Payment Method</Text>
               <View style={styles.paymentMethods}>
-                {(["cash", "card", "digital", "other"] as const).map(
-                  (method) => (
+                {(
+                  [
+                    { method: "cash", icon: "dollar", label: "Cash" },
+                    { method: "card", icon: "credit-card", label: "Card" },
+                    { method: "digital", icon: "mobile", label: "Digital" },
+                    { method: "other", icon: "tags", label: "Other" },
+                  ] as const
+                ).map(({ method, icon, label }) => {
+                  const active = paymentMethod === method;
+                  return (
                     <TouchableOpacity
                       key={method}
                       style={[
                         styles.paymentMethodButton,
-                        paymentMethod === method && styles.paymentMethodActive,
+                        active && styles.paymentMethodActive,
                       ]}
                       onPress={() => setPaymentMethod(method)}
                     >
+                      <AntDesign
+                        name={icon}
+                        size={16}
+                        color={active ? colors.primary : colors.textMuted}
+                      />
                       <Text
                         style={[
                           styles.paymentMethodText,
-                          paymentMethod === method &&
-                            styles.paymentMethodTextActive,
+                          active && styles.paymentMethodTextActive,
                         ]}
                       >
-                        {method === "cash"
-                          ? "💵 Cash"
-                          : method === "card"
-                            ? "💳 Card"
-                            : method === "digital"
-                              ? "📱 Digital"
-                              : "📌 Other"}
+                        {label}
                       </Text>
                     </TouchableOpacity>
-                  ),
-                )}
+                  );
+                })}
               </View>
             </View>
           )}
@@ -362,6 +380,11 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     borderBottomColor: c.border,
   },
   backButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  backButtonText: {
     fontSize: 14,
     color: c.primary,
     fontWeight: "600",
@@ -535,6 +558,9 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
   },
   paymentMethodButton: {
     width: "45%",
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 6,
     paddingVertical: 12,
     paddingHorizontal: 8,
     backgroundColor: c.surface,

@@ -8,6 +8,7 @@ import {
   exportAsJson,
   importFromJson,
 } from "@/utils/dataTransfer";
+import { AntDesign } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
@@ -202,7 +203,7 @@ export default function SettingsScreen() {
               <Text style={styles.settingLabel}>Currency</Text>
               <Text style={styles.settingDescription}>PHP</Text>
             </View>
-            <Text style={styles.settingValue}>›</Text>
+            <AntDesign name="right" size={16} color={colors.textFaint} />
           </TouchableOpacity>
         </View>
 
@@ -215,11 +216,14 @@ export default function SettingsScreen() {
             onPress={handleExport}
             disabled={busy !== null}
           >
-            <Text style={styles.settingLabel}>📤 Export Data</Text>
+            <View style={styles.settingLabelRow}>
+              <AntDesign name="upload" size={18} color={colors.text} />
+              <Text style={styles.settingLabel}>Export Data</Text>
+            </View>
             {busy === "export" ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
-              <Text style={styles.settingValue}>›</Text>
+              <AntDesign name="right" size={16} color={colors.textFaint} />
             )}
           </TouchableOpacity>
 
@@ -230,11 +234,14 @@ export default function SettingsScreen() {
             onPress={handleImport}
             disabled={busy !== null}
           >
-            <Text style={styles.settingLabel}>📥 Import Data</Text>
+            <View style={styles.settingLabelRow}>
+              <AntDesign name="download" size={18} color={colors.text} />
+              <Text style={styles.settingLabel}>Import Data</Text>
+            </View>
             {busy === "import" ? (
               <ActivityIndicator size="small" color={colors.primary} />
             ) : (
-              <Text style={styles.settingValue}>›</Text>
+              <AntDesign name="right" size={16} color={colors.textFaint} />
             )}
           </TouchableOpacity>
 
@@ -245,13 +252,16 @@ export default function SettingsScreen() {
             onPress={handleClearData}
             disabled={busy !== null}
           >
-            <Text style={[styles.settingLabel, styles.dangerText]}>
-              🗑️ Clear All Data
-            </Text>
+            <View style={styles.settingLabelRow}>
+              <AntDesign name="delete" size={18} color={colors.danger} />
+              <Text style={[styles.settingLabel, styles.dangerText]}>
+                Clear All Data
+              </Text>
+            </View>
             {busy === "clear" ? (
               <ActivityIndicator size="small" color={colors.danger} />
             ) : (
-              <Text style={styles.settingValue}>›</Text>
+              <AntDesign name="right" size={16} color={colors.textFaint} />
             )}
           </TouchableOpacity>
         </View>
@@ -269,9 +279,15 @@ export default function SettingsScreen() {
           </View>
 
           <View style={styles.infoBox}>
+            <AntDesign
+              name="bulb"
+              size={16}
+              color={colors.primary}
+              style={styles.infoIcon}
+            />
             <Text style={styles.infoText}>
-              💡 Gasto helps you track your daily expenses and manage your
-              budget effectively.
+              Gasto helps you track your daily expenses and manage your budget
+              effectively.
             </Text>
           </View>
         </View>
@@ -324,21 +340,20 @@ const makeStyles = (c: ThemeColors) =>
     settingLabelWrap: {
       flex: 1,
     },
+    settingLabelRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 10,
+    },
     settingLabel: {
       fontSize: 14,
       fontWeight: "600",
       color: c.text,
-      marginBottom: 2,
     },
     settingDescription: {
       fontSize: 12,
       color: c.textMuted,
       marginTop: 2,
-    },
-    settingValue: {
-      fontSize: 18,
-      color: c.textFaint,
-      fontWeight: "300",
     },
     segment: {
       flexDirection: "row",
@@ -405,6 +420,9 @@ const makeStyles = (c: ThemeColors) =>
       fontWeight: "500",
     },
     infoBox: {
+      flexDirection: "row",
+      alignItems: "flex-start",
+      gap: 8,
       backgroundColor: c.primarySoft,
       borderRadius: 10,
       paddingHorizontal: 12,
@@ -412,7 +430,11 @@ const makeStyles = (c: ThemeColors) =>
       borderLeftWidth: 3,
       borderLeftColor: c.primary,
     },
+    infoIcon: {
+      marginTop: 1,
+    },
     infoText: {
+      flex: 1,
       fontSize: 12,
       color: c.text,
       lineHeight: 18,

@@ -2,10 +2,12 @@ import ExpenseItem from "@/components/ExpenseItem";
 import StatCard from "@/components/StatCard";
 import { ThemeColors } from "@/constants/theme";
 import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useIncome } from "@/hooks/useIncome";
 import { formatAmount, formatCurrency } from "@/utils/currency";
+import { AntDesign } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -24,6 +26,7 @@ export default function HomeScreen() {
   const { expenses, categories, currentSpaceId, refreshData } = useExpenses();
   const { getNetWorth, refreshAccounts } = useAccounts();
   const { getMonthlyIncome, refreshIncome } = useIncome();
+  const { name } = useProfile();
   const router = useRouter();
   const [filterType, setFilterType] = useState<FilterType>("month");
   const styles = useThemedStyles(makeStyles);
@@ -170,7 +173,9 @@ export default function HomeScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Welcome back!</Text>
+            <Text style={styles.greeting}>
+              {name ? `Welcome back, ${name}!` : "Welcome back!"}
+            </Text>
             <Text style={styles.date}>
               {new Date().toLocaleDateString("en-US", {
                 month: "long",
@@ -180,7 +185,7 @@ export default function HomeScreen() {
             </Text>
           </View>
           <View style={styles.profileCircle}>
-            <Text style={styles.profileText}>👤</Text>
+            <AntDesign name="user" size={20} color={colors.textSecondary} />
           </View>
         </View>
 
@@ -412,7 +417,12 @@ export default function HomeScreen() {
             ))
           ) : (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyStateIcon}>📭</Text>
+              <AntDesign
+                name="inbox"
+                size={48}
+                color={colors.textFaint}
+                style={styles.emptyStateIcon}
+              />
               <Text style={styles.emptyStateText}>No expenses yet</Text>
               <Text style={styles.emptyStateSubtext}>
                 Start tracking your spending
@@ -459,9 +469,6 @@ const makeStyles = (c: ThemeColors) => StyleSheet.create({
     backgroundColor: c.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
-  },
-  profileText: {
-    fontSize: 20,
   },
   section: {
     marginTop: 16,

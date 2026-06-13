@@ -1,16 +1,17 @@
-import React, { useState } from "react";
-import {
-    Alert,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from "react-native";
 import { ThemeColors } from "@/constants/theme";
 import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
+import { AntDesign } from "@expo/vector-icons";
+import React, { useState } from "react";
+import {
+  Alert,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { Space } from "../types/expense";
 
 interface SpaceManagerProps {
@@ -215,7 +216,11 @@ export default function SpaceManager({
                   }}
                   style={styles.actionButton}
                 >
-                  <Text style={styles.actionButtonText}>✎</Text>
+                  <AntDesign
+                    name="edit"
+                    size={15}
+                    color={colors.textSecondary}
+                  />
                 </TouchableOpacity>
                 {space.id !== spaces[0]?.id && (
                   <>
@@ -223,13 +228,21 @@ export default function SpaceManager({
                       onPress={() => handleArchiveSpace(space)}
                       style={styles.actionButton}
                     >
-                      <Text style={styles.actionButtonText}>📦</Text>
+                      <AntDesign
+                        name="folder"
+                        size={15}
+                        color={colors.textSecondary}
+                      />
                     </TouchableOpacity>
                     <TouchableOpacity
                       onPress={() => handleDeleteSpace(space)}
                       style={[styles.actionButton, styles.deleteButton]}
                     >
-                      <Text style={styles.deleteButtonText}>🗑️</Text>
+                      <AntDesign
+                        name="delete"
+                        size={15}
+                        color={colors.danger}
+                      />
                     </TouchableOpacity>
                   </>
                 )}
@@ -240,7 +253,11 @@ export default function SpaceManager({
                 onPress={() => handleRestoreSpace(space)}
                 style={styles.actionButton}
               >
-                <Text style={styles.actionButtonText}>↩️</Text>
+                <AntDesign
+                  name="rollback"
+                  size={15}
+                  color={colors.textSecondary}
+                />
               </TouchableOpacity>
             )}
           </View>
@@ -307,12 +324,17 @@ export default function SpaceManager({
             onPress={() => setShowArchivedSpaces(!showArchivedSpaces)}
             style={styles.archiveHeader}
           >
-            <Text style={styles.archiveHeaderText}>
-              📦 Archived Spaces ({archivedSpaces.length})
-            </Text>
-            <Text style={styles.toggleIcon}>
-              {showArchivedSpaces ? "▼" : "▶"}
-            </Text>
+            <View style={styles.archiveHeaderLeft}>
+              <AntDesign name="folder" size={15} color={colors.textSecondary} />
+              <Text style={styles.archiveHeaderText}>
+                Archived Spaces ({archivedSpaces.length})
+              </Text>
+            </View>
+            <AntDesign
+              name={showArchivedSpaces ? "down" : "right"}
+              size={12}
+              color={colors.textMuted}
+            />
           </TouchableOpacity>
           {showArchivedSpaces && (
             <FlatList
@@ -332,7 +354,7 @@ export default function SpaceManager({
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Create New Space</Text>
               <TouchableOpacity onPress={() => setIsCreateModalVisible(false)}>
-                <Text style={styles.closeButton}>✕</Text>
+                <AntDesign name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -341,7 +363,7 @@ export default function SpaceManager({
               <Text style={styles.modalLabel}>Space Name</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., Japan Travel, Home"
+                placeholder="e.g., Personal, Travel, Home, Education"
                 placeholderTextColor={colors.textMuted}
                 value={newSpaceName}
                 onChangeText={setNewSpaceName}
@@ -382,7 +404,11 @@ export default function SpaceManager({
                     ]}
                   >
                     {selectedColor === color && (
-                      <Text style={styles.colorButtonCheckmark}>✓</Text>
+                      <AntDesign
+                        name="check"
+                        size={18}
+                        color={colors.onPrimary}
+                      />
                     )}
                   </TouchableOpacity>
                 ))}
@@ -415,7 +441,7 @@ export default function SpaceManager({
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Rename Space</Text>
               <TouchableOpacity onPress={() => setIsRenameModalVisible(false)}>
-                <Text style={styles.closeButton}>✕</Text>
+                <AntDesign name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -566,14 +592,8 @@ const makeStyles = (c: ThemeColors) =>
       justifyContent: "center",
       alignItems: "center",
     },
-    actionButtonText: {
-      fontSize: 14,
-    },
     deleteButton: {
       backgroundColor: c.dangerSoft,
-    },
-    deleteButtonText: {
-      fontSize: 14,
     },
     archiveHeader: {
       flexDirection: "row",
@@ -584,14 +604,15 @@ const makeStyles = (c: ThemeColors) =>
       backgroundColor: c.background,
       borderRadius: 8,
     },
+    archiveHeaderLeft: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 8,
+    },
     archiveHeaderText: {
       fontSize: 13,
       fontWeight: "600",
       color: c.textSecondary,
-    },
-    toggleIcon: {
-      fontSize: 12,
-      color: c.textMuted,
     },
     emptyText: {
       fontSize: 12,
@@ -623,10 +644,6 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 18,
       fontWeight: "bold",
       color: c.text,
-    },
-    closeButton: {
-      fontSize: 20,
-      color: c.textMuted,
     },
     modalSection: {
       marginBottom: 20,
@@ -684,11 +701,6 @@ const makeStyles = (c: ThemeColors) =>
     },
     colorButtonSelected: {
       borderColor: c.text,
-    },
-    colorButtonCheckmark: {
-      fontSize: 18,
-      color: c.onPrimary,
-      fontWeight: "bold",
     },
     modalButtons: {
       flexDirection: "row",

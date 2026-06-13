@@ -1,7 +1,7 @@
 import { useTheme } from "@/contexts/ThemeContext";
+import { AntDesign } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import React from "react";
-import { Text } from "react-native";
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -30,7 +30,7 @@ export default function TabLayout() {
         options={{
           title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🏠</Text>
+            <AntDesign name="home" size={size} color={color} />
           ),
         }}
       />
@@ -39,7 +39,7 @@ export default function TabLayout() {
         options={{
           title: "Add",
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>➕</Text>
+            <AntDesign name="plus-circle" size={size} color={color} />
           ),
         }}
       />
@@ -48,7 +48,7 @@ export default function TabLayout() {
         options={{
           title: "Expenses",
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>📊</Text>
+            <AntDesign name="profile" size={size} color={color} />
           ),
         }}
       />
@@ -57,7 +57,7 @@ export default function TabLayout() {
         options={{
           title: "Wealth",
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>💰</Text>
+            <AntDesign name="wallet" size={size} color={color} />
           ),
         }}
       />
@@ -66,7 +66,7 @@ export default function TabLayout() {
         options={{
           title: "Settings",
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>⚙️</Text>
+            <AntDesign name="setting" size={size} color={color} />
           ),
         }}
       />

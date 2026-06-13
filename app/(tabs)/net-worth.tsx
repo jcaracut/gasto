@@ -14,6 +14,7 @@ import { useAccounts } from "@/hooks/useAccounts";
 import { useIncome } from "@/hooks/useIncome";
 import { Account, AccountType } from "@/types/expense";
 import { formatCurrency } from "@/utils/currency";
+import { AntDesign } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useState } from "react";
 import {
@@ -226,7 +227,7 @@ export default function NetWorthScreen() {
                   style={styles.deleteBtn}
                   onPress={() => handleDeleteAccount(account)}
                 >
-                  <Text style={styles.deleteBtnText}>🗑️</Text>
+                  <AntDesign name="delete" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
               </TouchableOpacity>
             ))
@@ -276,7 +277,7 @@ export default function NetWorthScreen() {
                     )
                   }
                 >
-                  <Text style={styles.deleteBtnText}>🗑️</Text>
+                  <AntDesign name="delete" size={16} color={colors.textMuted} />
                 </TouchableOpacity>
               </View>
             ))
@@ -295,7 +296,7 @@ export default function NetWorthScreen() {
                 {editingAccount ? "Edit Account" : "Add Account"}
               </Text>
               <TouchableOpacity onPress={() => setModalVisible(false)}>
-                <Text style={styles.closeButton}>✕</Text>
+                <AntDesign name="close" size={20} color={colors.textMuted} />
               </TouchableOpacity>
             </View>
 
@@ -614,9 +615,6 @@ const makeStyles = (c: ThemeColors) =>
     deleteBtn: {
       padding: 6,
     },
-    deleteBtnText: {
-      fontSize: 16,
-    },
     emptyText: {
       fontSize: 13,
       color: c.textMuted,
@@ -653,10 +651,6 @@ const makeStyles = (c: ThemeColors) =>
       fontSize: 18,
       fontWeight: "bold",
       color: c.text,
-    },
-    closeButton: {
-      fontSize: 20,
-      color: c.textMuted,
     },
     modalSection: {
       marginBottom: 20,

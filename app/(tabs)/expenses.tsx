@@ -1,7 +1,8 @@
 import ExpenseItem from "@/components/ExpenseItem";
 import { ThemeColors } from "@/constants/theme";
-import { useThemedStyles } from "@/contexts/ThemeContext";
+import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { useExpenses } from "@/hooks/useExpenses";
+import { AntDesign } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
 import {
@@ -32,6 +33,7 @@ export default function ExpenseListScreen() {
 
   // Refresh data when screen comes into focus
   const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   useFocusEffect(
     useCallback(() => {
@@ -251,7 +253,12 @@ export default function ExpenseListScreen() {
           />
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateIcon}>📭</Text>
+            <AntDesign
+              name="inbox"
+              size={48}
+              color={colors.textFaint}
+              style={styles.emptyStateIcon}
+            />
             <Text style={styles.emptyStateText}>No expenses found</Text>
             <Text style={styles.emptyStateSubtext}>
               Try adjusting the date filter
