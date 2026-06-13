@@ -1,5 +1,7 @@
 import ExpenseItem from "@/components/ExpenseItem";
 import StatCard from "@/components/StatCard";
+import { ThemeColors } from "@/constants/theme";
+import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useIncome } from "@/hooks/useIncome";
@@ -24,6 +26,8 @@ export default function HomeScreen() {
   const { getMonthlyIncome, refreshIncome } = useIncome();
   const router = useRouter();
   const [filterType, setFilterType] = useState<FilterType>("month");
+  const styles = useThemedStyles(makeStyles);
+  const { colors } = useTheme();
 
   // For specific month filter
   const today = new Date();
@@ -315,24 +319,24 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <View style={styles.flowRow}>
-            <View style={[styles.flowCard, { backgroundColor: "#F0FFF4" }]}>
+            <View style={[styles.flowCard, { backgroundColor: colors.successSoft }]}>
               <Text style={styles.flowLabel}>Income (mo.)</Text>
-              <Text style={[styles.flowValue, { color: "#4CAF50" }]}>
+              <Text style={[styles.flowValue, { color: colors.success }]}>
                 {formatCurrency(monthlyIncome)}
               </Text>
             </View>
-            <View style={[styles.flowCard, { backgroundColor: "#FFF5F5" }]}>
+            <View style={[styles.flowCard, { backgroundColor: colors.dangerSoft }]}>
               <Text style={styles.flowLabel}>Expenses (mo.)</Text>
-              <Text style={[styles.flowValue, { color: "#FF6B6B" }]}>
+              <Text style={[styles.flowValue, { color: colors.primary }]}>
                 {formatCurrency(monthlyExpenses)}
               </Text>
             </View>
-            <View style={[styles.flowCard, { backgroundColor: "#F5F7FF" }]}>
+            <View style={[styles.flowCard, { backgroundColor: colors.infoSoft }]}>
               <Text style={styles.flowLabel}>Net Flow</Text>
               <Text
                 style={[
                   styles.flowValue,
-                  { color: netFlow >= 0 ? "#4CAF50" : "#FF6B6B" },
+                  { color: netFlow >= 0 ? colors.success : colors.primary },
                 ]}
               >
                 {netFlow >= 0 ? "+" : "-"}
@@ -423,10 +427,10 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: c.background,
   },
   header: {
     flexDirection: "row",
@@ -434,25 +438,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
+    borderBottomColor: c.border,
   },
   greeting: {
     fontSize: 20,
     fontWeight: "bold",
-    color: "#333",
+    color: c.text,
     marginBottom: 4,
   },
   date: {
     fontSize: 12,
-    color: "#999",
+    color: c.textMuted,
   },
   profileCircle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#F0F0F0",
+    backgroundColor: c.surfaceMuted,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -472,11 +476,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#333",
+    color: c.text,
   },
   seeAllLink: {
     fontSize: 12,
-    color: "#FF6B6B",
+    color: c.primary,
     fontWeight: "600",
   },
   statsScroll: {
@@ -495,56 +499,56 @@ const styles = StyleSheet.create({
     marginRight: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#EFEFEF",
-    backgroundColor: "#FFFFFF",
+    borderColor: c.border,
+    backgroundColor: c.surface,
     minWidth: 80,
     alignItems: "center",
   },
   filterButtonActive: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
+    borderColor: c.primary,
+    backgroundColor: c.primarySoft,
   },
   filterButtonText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#999",
+    color: c.textMuted,
   },
   filterButtonTextActive: {
-    color: "#FF6B6B",
+    color: c.primary,
     fontWeight: "600",
   },
   monthPickerContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#F0F8FF",
+    backgroundColor: c.infoSoft,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     marginVertical: 12,
     borderWidth: 1,
-    borderColor: "#E0EFFF",
+    borderColor: c.infoBorder,
   },
   monthNavButton: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#FF6B6B",
+    borderColor: c.primary,
   },
   monthNavButtonText: {
     fontSize: 12,
     fontWeight: "600",
-    color: "#FF6B6B",
+    color: c.primary,
   },
   monthDisplay: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: c.text,
   },
   categoryBreakdown: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 12,
     padding: 12,
   },
@@ -561,7 +565,7 @@ const styles = StyleSheet.create({
   categoryLabel: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#333",
+    color: c.text,
     marginBottom: 6,
   },
   progressBar: {
@@ -576,7 +580,7 @@ const styles = StyleSheet.create({
   categoryAmount: {
     fontSize: 14,
     fontWeight: "bold",
-    color: "#333",
+    color: c.text,
     minWidth: 70,
     textAlign: "right",
   },
@@ -591,31 +595,31 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#333",
+    color: c.text,
     marginBottom: 4,
   },
   emptyStateSubtext: {
     fontSize: 12,
-    color: "#999",
+    color: c.textMuted,
   },
   bottomPadding: {
     height: 60,
   },
   netWorthCard: {
-    backgroundColor: "#2D3748",
+    backgroundColor: c.netWorthCard,
     borderRadius: 12,
     padding: 20,
     marginBottom: 12,
   },
   netWorthLabel: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.7)",
+    color: c.onNetWorthCard,
     marginBottom: 6,
   },
   netWorthValue: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: c.onNetWorthCard,
   },
   flowRow: {
     flexDirection: "row",
@@ -629,7 +633,7 @@ const styles = StyleSheet.create({
   },
   flowLabel: {
     fontSize: 11,
-    color: "#666",
+    color: c.textSecondary,
     marginBottom: 4,
     fontWeight: "500",
   },

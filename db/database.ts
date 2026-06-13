@@ -159,7 +159,7 @@ const migrateAccountSchema = async (
   }
 };
 
-const getMeta = async (
+export const getMeta = async (
   db: SQLite.SQLiteDatabase,
   key: string,
 ): Promise<string | null> => {

@@ -8,6 +8,8 @@ import {
   getIncomeSourceIcon,
   getMonogramFontSize,
 } from "@/constants/finance";
+import { ThemeColors } from "@/constants/theme";
+import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useIncome } from "@/hooks/useIncome";
 import { Account, AccountType } from "@/types/expense";
@@ -48,6 +50,9 @@ export default function NetWorthScreen() {
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
 
   const isCustom = selectedProvider === "__custom__";
+
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const selectProvider = (provider: AccountProvider) => {
     setSelectedProvider(provider.name);
@@ -360,7 +365,7 @@ export default function NetWorthScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="e.g. BPI Savings, Cash on hand"
-                  placeholderTextColor="#CCC"
+                  placeholderTextColor={colors.textFaint}
                   value={name}
                   onChangeText={setName}
                 />
@@ -420,7 +425,7 @@ export default function NetWorthScreen() {
                   <TextInput
                     style={styles.balanceInput}
                     placeholder="0.00"
-                    placeholderTextColor="#CCC"
+                    placeholderTextColor={colors.textFaint}
                     keyboardType="decimal-pad"
                     value={balance}
                     onChangeText={setBalance}
@@ -452,354 +457,357 @@ export default function NetWorthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  section: {
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 12,
-  },
-  addBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "#FF6B6B",
-    borderRadius: 6,
-  },
-  addBtnText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  netWorthCard: {
-    backgroundColor: "#2D3748",
-    borderRadius: 16,
-    padding: 24,
-    alignItems: "center",
-  },
-  netWorthLabel: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.7)",
-    marginBottom: 8,
-  },
-  netWorthValue: {
-    fontSize: 34,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-  },
-  netWorthSub: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.6)",
-    marginTop: 6,
-  },
-  accountRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginVertical: 4,
-  },
-  accountIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  incomeIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#F0FFF4",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  accountIconText: {
-    fontSize: 22,
-  },
-  accountMonogram: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-  },
-  accountInfo: {
-    flex: 1,
-  },
-  accountName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 2,
-  },
-  accountUpdated: {
-    fontSize: 11,
-    color: "#999",
-  },
-  accountBalance: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#333",
-    marginRight: 8,
-  },
-  incomeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginVertical: 4,
-  },
-  incomeAmount: {
-    fontSize: 15,
-    fontWeight: "bold",
-    color: "#4CAF50",
-    marginRight: 8,
-  },
-  incomeTotalCard: {
-    backgroundColor: "#F0FFF4",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: "#D7F5DF",
-  },
-  incomeTotalLabel: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 4,
-  },
-  incomeTotalValue: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#4CAF50",
-  },
-  deleteBtn: {
-    padding: 6,
-  },
-  deleteBtnText: {
-    fontSize: 16,
-  },
-  emptyText: {
-    fontSize: 13,
-    color: "#999",
-    textAlign: "center",
-    paddingVertical: 16,
-  },
-  bottomPadding: {
-    height: 60,
-  },
-  // Modal
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-    maxHeight: "88%",
-  },
-  modalScroll: {
-    flexGrow: 0,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  closeButton: {
-    fontSize: 20,
-    color: "#999",
-  },
-  modalSection: {
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#EFEFEF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: "#333",
-  },
-  typeRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  typeButton: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: "#F5F5F5",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  typeButtonActive: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
-  },
-  typeText: {
-    fontSize: 13,
-    fontWeight: "500",
-    color: "#999",
-  },
-  typeTextActive: {
-    color: "#FF6B6B",
-    fontWeight: "700",
-  },
-  providerGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  providerCard: {
-    width: "22%",
-    alignItems: "center",
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#F8F9FA",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  providerCardActive: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
-  },
-  providerBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 6,
-  },
-  providerBadgeText: {
-    color: "#FFFFFF",
-    fontWeight: "800",
-    fontSize: 18,
-  },
-  providerName: {
-    fontSize: 11,
-    fontWeight: "600",
-    color: "#555",
-  },
-  iconPicker: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  iconButton: {
-    width: "22%",
-    aspectRatio: 1,
-    borderRadius: 8,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  iconButtonSelected: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
-  },
-  iconButtonText: {
-    fontSize: 26,
-  },
-  balanceInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: "#EFEFEF",
-  },
-  balanceSymbol: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#FF6B6B",
-    marginRight: 4,
-  },
-  balanceInput: {
-    flex: 1,
-    height: 46,
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 8,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#F0F0F0",
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-  },
-  saveButton: {
-    backgroundColor: "#FF6B6B",
-  },
-  saveButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    headerTitle: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    section: {
+      marginTop: 16,
+      paddingHorizontal: 16,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    sectionTitle: {
+      fontSize: 16,
+      fontWeight: "bold",
+      color: c.text,
+      marginBottom: 12,
+    },
+    addBtn: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.primary,
+      borderRadius: 6,
+    },
+    addBtnText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: c.onPrimary,
+    },
+    netWorthCard: {
+      backgroundColor: c.netWorthCard,
+      borderRadius: 16,
+      padding: 24,
+      alignItems: "center",
+    },
+    netWorthLabel: {
+      fontSize: 13,
+      color: c.onNetWorthCard,
+      opacity: 0.7,
+      marginBottom: 8,
+    },
+    netWorthValue: {
+      fontSize: 34,
+      fontWeight: "bold",
+      color: c.onNetWorthCard,
+    },
+    netWorthSub: {
+      fontSize: 12,
+      color: c.onNetWorthCard,
+      opacity: 0.6,
+      marginTop: 6,
+    },
+    accountRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      marginVertical: 4,
+    },
+    accountIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.surfaceMuted,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 12,
+    },
+    incomeIcon: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      backgroundColor: c.successSoft,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 12,
+    },
+    accountIconText: {
+      fontSize: 22,
+    },
+    accountMonogram: {
+      color: c.onPrimary,
+      fontWeight: "800",
+    },
+    accountInfo: {
+      flex: 1,
+    },
+    accountName: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.text,
+      marginBottom: 2,
+    },
+    accountUpdated: {
+      fontSize: 11,
+      color: c.textMuted,
+    },
+    accountBalance: {
+      fontSize: 15,
+      fontWeight: "bold",
+      color: c.text,
+      marginRight: 8,
+    },
+    incomeRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      marginVertical: 4,
+    },
+    incomeAmount: {
+      fontSize: 15,
+      fontWeight: "bold",
+      color: c.success,
+      marginRight: 8,
+    },
+    incomeTotalCard: {
+      backgroundColor: c.successSoft,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    incomeTotalLabel: {
+      fontSize: 12,
+      color: c.textSecondary,
+      marginBottom: 4,
+    },
+    incomeTotalValue: {
+      fontSize: 22,
+      fontWeight: "bold",
+      color: c.success,
+    },
+    deleteBtn: {
+      padding: 6,
+    },
+    deleteBtnText: {
+      fontSize: 16,
+    },
+    emptyText: {
+      fontSize: 13,
+      color: c.textMuted,
+      textAlign: "center",
+      paddingVertical: 16,
+    },
+    bottomPadding: {
+      height: 60,
+    },
+    // Modal
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: "flex-end",
+    },
+    modalContent: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingVertical: 24,
+      paddingHorizontal: 16,
+      maxHeight: "88%",
+    },
+    modalScroll: {
+      flexGrow: 0,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 24,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    closeButton: {
+      fontSize: 20,
+      color: c.textMuted,
+    },
+    modalSection: {
+      marginBottom: 20,
+    },
+    modalLabel: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: c.text,
+      marginBottom: 8,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: c.text,
+    },
+    typeRow: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    typeButton: {
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 8,
+      backgroundColor: c.surfaceMuted,
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    typeButtonActive: {
+      borderColor: c.primary,
+      backgroundColor: c.primarySoft,
+    },
+    typeText: {
+      fontSize: 13,
+      fontWeight: "500",
+      color: c.textMuted,
+    },
+    typeTextActive: {
+      color: c.primary,
+      fontWeight: "700",
+    },
+    providerGrid: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    providerCard: {
+      width: "22%",
+      alignItems: "center",
+      paddingVertical: 10,
+      borderRadius: 10,
+      backgroundColor: c.background,
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    providerCardActive: {
+      borderColor: c.primary,
+      backgroundColor: c.primarySoft,
+    },
+    providerBadge: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: "center",
+      alignItems: "center",
+      marginBottom: 6,
+    },
+    providerBadgeText: {
+      color: c.onPrimary,
+      fontWeight: "800",
+      fontSize: 18,
+    },
+    providerName: {
+      fontSize: 11,
+      fontWeight: "600",
+      color: c.textSecondary,
+    },
+    iconPicker: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    iconButton: {
+      width: "22%",
+      aspectRatio: 1,
+      borderRadius: 8,
+      backgroundColor: c.surfaceMuted,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    iconButtonSelected: {
+      borderColor: c.primary,
+      backgroundColor: c.primarySoft,
+    },
+    iconButtonText: {
+      fontSize: 26,
+    },
+    balanceInputContainer: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      borderWidth: 1,
+      borderColor: c.border,
+    },
+    balanceSymbol: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: c.primary,
+      marginRight: 4,
+    },
+    balanceInput: {
+      flex: 1,
+      height: 46,
+      fontSize: 20,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    modalButtons: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 8,
+    },
+    button: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    cancelButton: {
+      backgroundColor: c.surfaceMuted,
+    },
+    cancelButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.textSecondary,
+    },
+    saveButton: {
+      backgroundColor: c.primary,
+    },
+    saveButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.onPrimary,
+    },
+  });

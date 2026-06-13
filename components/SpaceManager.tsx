@@ -9,12 +9,18 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { ThemeColors } from "@/constants/theme";
+import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { Space } from "../types/expense";
 
 interface SpaceManagerProps {
   spaces: Space[];
   currentSpaceId: string;
-  onCreateSpace: (name: string, icon: string, color: string) => Promise<void>;
+  onCreateSpace: (
+    name: string,
+    icon: string,
+    color: string,
+  ) => Promise<unknown>;
   onDeleteSpace: (spaceId: string) => Promise<void>;
   onRenameSpace: (spaceId: string, newName: string) => Promise<void>;
   onArchiveSpace: (spaceId: string, isArchived: boolean) => Promise<void>;
@@ -50,6 +56,9 @@ export default function SpaceManager({
   const [selectedColor, setSelectedColor] = useState(SPACE_COLORS[0]);
   const [renamingSpaceId, setRenamingSpaceId] = useState<string | null>(null);
   const [renamingSpaceName, setRenamingSpaceName] = useState("");
+
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const activeSpaces = spaces.filter((s) => !s.isArchived);
   const archivedSpaces = spaces.filter((s) => s.isArchived);
@@ -333,7 +342,7 @@ export default function SpaceManager({
               <TextInput
                 style={styles.input}
                 placeholder="e.g., Japan Travel, Home"
-                placeholderTextColor="#CCC"
+                placeholderTextColor={colors.textMuted}
                 value={newSpaceName}
                 onChangeText={setNewSpaceName}
               />
@@ -415,7 +424,7 @@ export default function SpaceManager({
               <TextInput
                 style={styles.input}
                 placeholder="Space name"
-                placeholderTextColor="#CCC"
+                placeholderTextColor={colors.textMuted}
                 value={renamingSpaceName}
                 onChangeText={setRenamingSpaceName}
               />
@@ -442,270 +451,271 @@ export default function SpaceManager({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingVertical: 12,
-  },
-  currentSpaceSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  currentSpaceDisplay: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 12,
-    padding: 16,
-    marginTop: 12,
-    borderLeftWidth: 4,
-    borderLeftColor: "#FF6B6B",
-  },
-  currentSpaceNameLarge: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 4,
-  },
-  spaceCreatedDate: {
-    fontSize: 12,
-    color: "#999",
-  },
-  spacesSection: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionLabel: {
-    fontSize: 14,
-    fontWeight: "bold",
-    color: "#333",
-    textTransform: "uppercase",
-  },
-  createButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "#FF6B6B",
-    borderRadius: 6,
-  },
-  createButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-  spaceItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    marginVertical: 6,
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  currentSpaceItem: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
-  },
-  spaceIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 12,
-  },
-  archivedIcon: {
-    opacity: 0.5,
-  },
-  spaceIconText: {
-    fontSize: 24,
-  },
-  spaceInfo: {
-    flex: 1,
-  },
-  spaceName: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  currentSpaceName: {
-    color: "#FF6B6B",
-    fontWeight: "700",
-  },
-  badgeText: {
-    fontSize: 11,
-    color: "#FF6B6B",
-    fontWeight: "600",
-  },
-  spaceActions: {
-    flexDirection: "row",
-    gap: 8,
-  },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 6,
-    backgroundColor: "#F0F0F0",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  actionButtonText: {
-    fontSize: 14,
-  },
-  deleteButton: {
-    backgroundColor: "#FFE5E5",
-  },
-  deleteButtonText: {
-    fontSize: 14,
-  },
-  archiveHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    backgroundColor: "#F8F9FA",
-    borderRadius: 8,
-  },
-  archiveHeaderText: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#666",
-  },
-  toggleIcon: {
-    fontSize: 12,
-    color: "#999",
-  },
-  emptyText: {
-    fontSize: 12,
-    color: "#999",
-    textAlign: "center",
-    paddingVertical: 16,
-  },
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      paddingVertical: 12,
+    },
+    currentSpaceSection: {
+      paddingHorizontal: 16,
+      marginBottom: 24,
+    },
+    currentSpaceDisplay: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderRadius: 12,
+      padding: 16,
+      marginTop: 12,
+      borderLeftWidth: 4,
+      borderLeftColor: c.primary,
+    },
+    currentSpaceNameLarge: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: c.text,
+      marginBottom: 4,
+    },
+    spaceCreatedDate: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
+    spacesSection: {
+      paddingHorizontal: 16,
+      marginBottom: 24,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 12,
+    },
+    sectionLabel: {
+      fontSize: 14,
+      fontWeight: "bold",
+      color: c.text,
+      textTransform: "uppercase",
+    },
+    createButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.primary,
+      borderRadius: 6,
+    },
+    createButtonText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: c.onPrimary,
+    },
+    spaceItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: c.surface,
+      borderRadius: 10,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+      marginVertical: 6,
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    currentSpaceItem: {
+      borderColor: c.primary,
+      backgroundColor: c.primarySoft,
+    },
+    spaceIcon: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 12,
+    },
+    archivedIcon: {
+      opacity: 0.5,
+    },
+    spaceIconText: {
+      fontSize: 24,
+    },
+    spaceInfo: {
+      flex: 1,
+    },
+    spaceName: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.text,
+      marginBottom: 4,
+    },
+    currentSpaceName: {
+      color: c.primary,
+      fontWeight: "700",
+    },
+    badgeText: {
+      fontSize: 11,
+      color: c.primary,
+      fontWeight: "600",
+    },
+    spaceActions: {
+      flexDirection: "row",
+      gap: 8,
+    },
+    actionButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 6,
+      backgroundColor: c.surfaceMuted,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    actionButtonText: {
+      fontSize: 14,
+    },
+    deleteButton: {
+      backgroundColor: c.dangerSoft,
+    },
+    deleteButtonText: {
+      fontSize: 14,
+    },
+    archiveHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      backgroundColor: c.background,
+      borderRadius: 8,
+    },
+    archiveHeaderText: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: c.textSecondary,
+    },
+    toggleIcon: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
+    emptyText: {
+      fontSize: 12,
+      color: c.textMuted,
+      textAlign: "center",
+      paddingVertical: 16,
+    },
 
-  // Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
-  },
-  modalContent: {
-    backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  closeButton: {
-    fontSize: 20,
-    color: "#999",
-  },
-  modalSection: {
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontSize: 13,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#EFEFEF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 14,
-    color: "#333",
-  },
-  iconPicker: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-  },
-  iconButton: {
-    width: "22%",
-    aspectRatio: 1,
-    borderRadius: 8,
-    backgroundColor: "#F5F5F5",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: "transparent",
-  },
-  iconButtonSelected: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
-  },
-  iconButtonText: {
-    fontSize: 28,
-  },
-  colorPicker: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  colorButton: {
-    width: "23%",
-    aspectRatio: 1,
-    borderRadius: 12,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 3,
-    borderColor: "transparent",
-  },
-  colorButtonSelected: {
-    borderColor: "#333",
-  },
-  colorButtonCheckmark: {
-    fontSize: 18,
-    color: "#FFFFFF",
-    fontWeight: "bold",
-  },
-  modalButtons: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 24,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  cancelButton: {
-    backgroundColor: "#F0F0F0",
-  },
-  cancelButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#666",
-  },
-  createSubmitButton: {
-    backgroundColor: "#FF6B6B",
-  },
-  createSubmitButtonText: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#FFFFFF",
-  },
-});
+    // Modal Styles
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: c.overlay,
+      justifyContent: "flex-end",
+    },
+    modalContent: {
+      backgroundColor: c.surface,
+      borderTopLeftRadius: 20,
+      borderTopRightRadius: 20,
+      paddingVertical: 24,
+      paddingHorizontal: 16,
+    },
+    modalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 24,
+    },
+    modalTitle: {
+      fontSize: 18,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    closeButton: {
+      fontSize: 20,
+      color: c.textMuted,
+    },
+    modalSection: {
+      marginBottom: 20,
+    },
+    modalLabel: {
+      fontSize: 13,
+      fontWeight: "600",
+      color: c.text,
+      marginBottom: 8,
+    },
+    input: {
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 14,
+      color: c.text,
+    },
+    iconPicker: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 8,
+    },
+    iconButton: {
+      width: "22%",
+      aspectRatio: 1,
+      borderRadius: 8,
+      backgroundColor: c.surfaceMuted,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 2,
+      borderColor: "transparent",
+    },
+    iconButtonSelected: {
+      borderColor: c.primary,
+      backgroundColor: c.primarySoft,
+    },
+    iconButtonText: {
+      fontSize: 28,
+    },
+    colorPicker: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      gap: 10,
+    },
+    colorButton: {
+      width: "23%",
+      aspectRatio: 1,
+      borderRadius: 12,
+      justifyContent: "center",
+      alignItems: "center",
+      borderWidth: 3,
+      borderColor: "transparent",
+    },
+    colorButtonSelected: {
+      borderColor: c.text,
+    },
+    colorButtonCheckmark: {
+      fontSize: 18,
+      color: c.onPrimary,
+      fontWeight: "bold",
+    },
+    modalButtons: {
+      flexDirection: "row",
+      gap: 12,
+      marginTop: 24,
+    },
+    button: {
+      flex: 1,
+      paddingVertical: 12,
+      borderRadius: 8,
+      justifyContent: "center",
+      alignItems: "center",
+    },
+    cancelButton: {
+      backgroundColor: c.surfaceMuted,
+    },
+    cancelButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.textSecondary,
+    },
+    createSubmitButton: {
+      backgroundColor: c.primary,
+    },
+    createSubmitButtonText: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.onPrimary,
+    },
+  });

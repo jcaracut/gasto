@@ -129,6 +129,25 @@ Each domain hook (`useExpenses`, `useIncome`, `useAccounts`) keeps an in-memory 
 - `hooks/useAccounts.ts`: `addAccount`, `updateAccount`, `deleteAccount`, `getNetWorth()`. BPI / Maya / GCash are seeded as defaults on first run; users can add/rename/delete any account.
 - UI: the **Wealth** tab (`app/(tabs)/net-worth.tsx`) shows total net worth, the editable accounts list (tap to edit, modal modeled on `SpaceManager`), and this month's income. The dashboard shows a net-worth card plus an income-vs-expense net-flow row.
 
+## Theming / Dark Mode
+
+All colors are centralized as semantic tokens. **Never hardcode neutral colors in screens** — pull them from the active palette.
+
+- `constants/theme.ts` — `ThemeColors` interface plus `lightColors` / `darkColors` palettes (same keys in both). Tokens: `background`, `surface`, `surfaceMuted`, `border`, `text`, `textSecondary`, `textMuted`, `textFaint`, `primary`, `primarySoft`, `onPrimary`, `success`/`successSoft`, `danger`/`dangerSoft`, `info`/`infoSoft`/`infoBorder`, `netWorthCard`/`onNetWorthCard`, `tabBar`/`tabBorder`, `overlay`.
+- `contexts/ThemeContext.tsx` — `ThemeProviderCustom` wraps the app in `app/_layout.tsx`. `useTheme()` returns `{ mode, isDark, colors, setMode }` where `mode` is `"system" | "light" | "dark"` (persisted to the `meta` table under `theme_mode`; `"system"` follows the OS via RN `useColorScheme`).
+- Pattern: write styles as a factory `const makeStyles = (c: ThemeColors) => StyleSheet.create({ ... })` and consume with `const styles = useThemedStyles(makeStyles)`. For inline/dynamic colors use `const { colors } = useTheme()`. Brand/data-driven colors (category/account/space `color`) stay literal.
+- The theme picker lives in **Settings → Appearance** (System / Light / Dark segmented control).
+
+## Export / Import
+
+`utils/dataTransfer.ts` handles backup/restore (Expo Go compatible: `expo-file-system/legacy`, `expo-sharing`, `expo-document-picker`, `xlsx`).
+
+- `exportAsJson()` — full re-importable backup (`GastoBackup`: app/version/exportedAt + all tables), shared via the OS share sheet.
+- `exportAsExcel()` — multi-sheet `.xlsx` (one sheet per table) via SheetJS; read-only, not re-importable.
+- `importFromJson()` — document picker → validate it's a Gasto backup → `INSERT OR REPLACE` every row inside a transaction (merge by id). Returns a per-table `ImportSummary`, or `null` if cancelled.
+- `clearAllData()` — deletes `expenses` / `income` / `budgets` (keeps categories, spaces, accounts, and `meta`).
+- UI lives in **Settings → Data Management**. After import/clear, call `refreshData()` so the in-memory mirror reloads.
+
 ## Build & Test
 
 ### Development
@@ -170,7 +189,9 @@ npm run reset-project  # Resets to initial project state (caution: deletes data)
 | `app/(tabs)/expenses.tsx`         | Expenses list with filters                          |
 | `app/(tabs)/net-worth.tsx`        | Wealth screen: net worth, accounts, income          |
 | `app/(tabs)/settings.tsx`         | Settings and configuration                          |
-| `constants/theme.ts`              | Colors, spacing, typography                         |
+| `constants/theme.ts`              | Semantic color tokens + light/dark palettes         |
+| `contexts/ThemeContext.tsx`       | Theme provider, `useTheme`, `useThemedStyles`       |
+| `utils/dataTransfer.ts`           | Export (JSON/Excel) + import (JSON) + clear data    |
 | `utils/currency.ts`               | Currency formatting utilities                       |
 
 ## Common Development Tasks

@@ -1,4 +1,6 @@
 import ExpenseItem from "@/components/ExpenseItem";
+import { ThemeColors } from "@/constants/theme";
+import { useThemedStyles } from "@/contexts/ThemeContext";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useMemo, useState } from "react";
@@ -29,6 +31,8 @@ export default function ExpenseListScreen() {
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
 
   // Refresh data when screen comes into focus
+  const styles = useThemedStyles(makeStyles);
+
   useFocusEffect(
     useCallback(() => {
       refreshData();
@@ -259,114 +263,115 @@ export default function ExpenseListScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F8F9FA",
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#333",
-  },
-  filterScroll: {
-    maxHeight: 50,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  filterButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#EFEFEF",
-    backgroundColor: "#FFFFFF",
-    minWidth: 80,
-    minHeight: 32,
-    alignItems: "center",
-  },
-  filterButtonActive: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
-  },
-  filterButtonText: {
-    fontSize: 12,
-    fontWeight: "500",
-    color: "#999",
-  },
-  filterButtonTextActive: {
-    color: "#FF6B6B",
-    fontWeight: "600",
-  },
-  monthPickerContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#F0F8FF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E0EFFF",
-  },
-  monthNavButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    backgroundColor: "#FFFFFF",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#FF6B6B",
-  },
-  monthNavButtonText: {
-    fontSize: 12,
-    fontWeight: "600",
-    color: "#FF6B6B",
-  },
-  monthDisplay: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#333",
-  },
-  content: {
-    flex: 1,
-  },
-  listContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  dateHeader: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#999",
-    marginTop: 16,
-    marginBottom: 8,
-    textTransform: "uppercase",
-  },
-  emptyState: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-  },
-  emptyStateIcon: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  emptyStateText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 4,
-  },
-  emptyStateSubtext: {
-    fontSize: 12,
-    color: "#999",
-  },
-});
+const makeStyles = (c: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: c.background,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: c.surface,
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+    },
+    title: {
+      fontSize: 20,
+      fontWeight: "bold",
+      color: c.text,
+    },
+    filterScroll: {
+      maxHeight: 50,
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    filterButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      marginRight: 8,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: c.border,
+      backgroundColor: c.surface,
+      minWidth: 80,
+      minHeight: 32,
+      alignItems: "center",
+    },
+    filterButtonActive: {
+      borderColor: c.primary,
+      backgroundColor: c.primarySoft,
+    },
+    filterButtonText: {
+      fontSize: 12,
+      fontWeight: "500",
+      color: c.textMuted,
+    },
+    filterButtonTextActive: {
+      color: c.primary,
+      fontWeight: "600",
+    },
+    monthPickerContainer: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      backgroundColor: c.infoSoft,
+      borderBottomWidth: 1,
+      borderBottomColor: c.infoBorder,
+    },
+    monthNavButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 6,
+      backgroundColor: c.surface,
+      borderRadius: 6,
+      borderWidth: 1,
+      borderColor: c.primary,
+    },
+    monthNavButtonText: {
+      fontSize: 12,
+      fontWeight: "600",
+      color: c.primary,
+    },
+    monthDisplay: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.text,
+    },
+    content: {
+      flex: 1,
+    },
+    listContent: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+    },
+    dateHeader: {
+      fontSize: 14,
+      fontWeight: "600",
+      color: c.textMuted,
+      marginTop: 16,
+      marginBottom: 8,
+      textTransform: "uppercase",
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: 40,
+    },
+    emptyStateIcon: {
+      fontSize: 48,
+      marginBottom: 12,
+    },
+    emptyStateText: {
+      fontSize: 16,
+      fontWeight: "600",
+      color: c.text,
+      marginBottom: 4,
+    },
+    emptyStateSubtext: {
+      fontSize: 12,
+      color: c.textMuted,
+    },
+  });

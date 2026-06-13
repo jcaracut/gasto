@@ -1,3 +1,4 @@
+import { useTheme } from "@/contexts/ThemeContext";
 import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -16,10 +17,17 @@ const StatCard: React.FC<StatCardProps> = ({
   color = "#FF6B6B",
   backgroundColor = "#FFF5F5",
 }) => {
+  const { isDark, colors } = useTheme();
+  // The light-tint backgrounds passed by callers read poorly on a dark screen,
+  // so in dark mode derive a subtle tint from the accent color instead.
+  const cardBackground = isDark ? `${color}26` : backgroundColor;
+
   return (
-    <View style={[styles.card, { backgroundColor }]}>
+    <View style={[styles.card, { backgroundColor: cardBackground }]}>
       {icon && <Text style={styles.icon}>{icon}</Text>}
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>
+        {label}
+      </Text>
       <Text style={[styles.value, { color }]}>{value}</Text>
     </View>
   );
@@ -45,7 +53,6 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 12,
-    color: "#666",
     marginBottom: 4,
   },
   value: {

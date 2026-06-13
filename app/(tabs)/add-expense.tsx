@@ -1,5 +1,7 @@
 import CategorySelector from "@/components/CategorySelector";
 import { INCOME_SOURCES } from "@/constants/finance";
+import { ThemeColors } from "@/constants/theme";
+import { useTheme, useThemedStyles } from "@/contexts/ThemeContext";
 import { useExpenses } from "@/hooks/useExpenses";
 import { useIncome } from "@/hooks/useIncome";
 import { IncomeSource } from "@/types/expense";
@@ -24,6 +26,8 @@ export default function AddScreen() {
   const router = useRouter();
   const { addExpense, categories, currentSpaceId, spaces } = useExpenses();
   const { addIncome } = useIncome();
+  const { colors } = useTheme();
+  const styles = useThemedStyles(makeStyles);
 
   const [mode, setMode] = useState<Mode>("expense");
   const [loading, setLoading] = useState(false);
@@ -209,7 +213,7 @@ export default function AddScreen() {
               <TextInput
                 style={styles.amountInput}
                 placeholder="0.00"
-                placeholderTextColor="#CCC"
+                placeholderTextColor={colors.textMuted}
                 keyboardType="decimal-pad"
                 value={amount}
                 onChangeText={setAmount}
@@ -229,7 +233,7 @@ export default function AddScreen() {
                   ? "What did you spend on?"
                   : "Note (e.g. June paycheck)"
               }
-              placeholderTextColor="#CCC"
+              placeholderTextColor={colors.textMuted}
               value={description}
               onChangeText={setDescription}
               multiline
@@ -339,10 +343,10 @@ export default function AddScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: c.background,
   },
   flex: {
     flex: 1,
@@ -353,29 +357,29 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderBottomWidth: 1,
-    borderBottomColor: "#EFEFEF",
+    borderBottomColor: c.border,
   },
   backButton: {
     fontSize: 14,
-    color: "#FF6B6B",
+    color: c.primary,
     fontWeight: "600",
   },
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333",
+    color: c.text,
   },
   placeholder: {
     width: 50,
   },
   toggleContainer: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#EFEFEF",
+    borderColor: c.border,
     padding: 4,
     gap: 4,
   },
@@ -386,18 +390,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   toggleButtonExpense: {
-    backgroundColor: "#FFF5F5",
+    backgroundColor: c.primarySoft,
   },
   toggleButtonIncome: {
-    backgroundColor: "#F0FFF4",
+    backgroundColor: c.successSoft,
   },
   toggleText: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#999",
+    color: c.textMuted,
   },
   toggleTextActive: {
-    color: "#333",
+    color: c.text,
   },
   spaceSelectorContainer: {
     flexDirection: "row",
@@ -410,16 +414,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     marginHorizontal: 8,
     marginVertical: 6,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#EFEFEF",
+    borderColor: c.border,
     alignItems: "center",
     justifyContent: "center",
   },
   spaceSelectorButtonActive: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
+    borderColor: c.primary,
+    backgroundColor: c.primarySoft,
   },
   spaceSelectorIcon: {
     fontSize: 24,
@@ -428,11 +432,11 @@ const styles = StyleSheet.create({
   spaceSelectorText: {
     fontSize: 12,
     fontWeight: "500",
-    color: "#999",
+    color: c.textMuted,
     textAlign: "center",
   },
   spaceSelectorTextActive: {
-    color: "#FF6B6B",
+    color: c.primary,
     fontWeight: "700",
   },
   section: {
@@ -442,49 +446,49 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#333",
+    color: c.text,
     marginBottom: 8,
   },
   amountInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: "#EFEFEF",
+    borderColor: c.border,
   },
   currencySymbol: {
     fontSize: 24,
     fontWeight: "bold",
-    color: "#FF6B6B",
+    color: c.primary,
     marginRight: 4,
   },
   currencySymbolIncome: {
-    color: "#4CAF50",
+    color: c.success,
   },
   amountInput: {
     flex: 1,
     height: 50,
     fontSize: 24,
     fontWeight: "bold",
-    color: "#333",
+    color: c.text,
   },
   descriptionInput: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#EFEFEF",
+    borderColor: c.border,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 14,
-    color: "#333",
+    color: c.text,
     minHeight: 80,
     textAlignVertical: "top",
   },
   charCount: {
     fontSize: 10,
-    color: "#CCC",
+    color: c.textFaint,
     marginTop: 4,
     textAlign: "right",
   },
@@ -501,14 +505,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     marginHorizontal: 8,
     marginVertical: 6,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#EFEFEF",
+    borderColor: c.border,
   },
   sourceButtonActive: {
-    borderColor: "#4CAF50",
-    backgroundColor: "#F0FFF4",
+    borderColor: c.success,
+    backgroundColor: c.successSoft,
   },
   sourceIcon: {
     fontSize: 20,
@@ -517,10 +521,10 @@ const styles = StyleSheet.create({
   sourceText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#999",
+    color: c.textMuted,
   },
   sourceTextActive: {
-    color: "#4CAF50",
+    color: c.success,
     fontWeight: "700",
   },
   paymentMethods: {
@@ -533,37 +537,37 @@ const styles = StyleSheet.create({
     width: "45%",
     paddingVertical: 12,
     paddingHorizontal: 8,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: c.surface,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#EFEFEF",
+    borderColor: c.border,
     marginHorizontal: 8,
     marginVertical: 6,
     alignItems: "center",
   },
   paymentMethodActive: {
-    borderColor: "#FF6B6B",
-    backgroundColor: "#FFF5F5",
+    borderColor: c.primary,
+    backgroundColor: c.primarySoft,
   },
   paymentMethodText: {
     fontSize: 13,
     fontWeight: "500",
-    color: "#999",
+    color: c.textMuted,
   },
   paymentMethodTextActive: {
-    color: "#FF6B6B",
+    color: c.primary,
     fontWeight: "600",
   },
   addButton: {
     marginHorizontal: 16,
     marginTop: 24,
     paddingVertical: 14,
-    backgroundColor: "#FF6B6B",
+    backgroundColor: c.primary,
     borderRadius: 10,
     alignItems: "center",
   },
   addButtonIncome: {
-    backgroundColor: "#4CAF50",
+    backgroundColor: c.success,
   },
   addButtonDisabled: {
     opacity: 0.6,
@@ -571,7 +575,7 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 16,
     fontWeight: "bold",
-    color: "#FFFFFF",
+    color: c.onPrimary,
   },
   bottomPadding: {
     height: 40,

@@ -6,6 +6,8 @@ import {
     TouchableOpacity,
     View,
 } from "react-native";
+import { ThemeColors } from "@/constants/theme";
+import { useThemedStyles } from "@/contexts/ThemeContext";
 import { Category } from "../types/expense";
 
 interface CategorySelectorProps {
@@ -19,6 +21,8 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   selectedCategory,
   onSelectCategory,
 }) => {
+  const styles = useThemedStyles(makeStyles);
+
   return (
     <ScrollView
       horizontal
@@ -61,11 +65,11 @@ const CategorySelector: React.FC<CategorySelectorProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
+const makeStyles = (c: ThemeColors) => StyleSheet.create({
   container: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: "#F8F9FA",
+    backgroundColor: c.background,
   },
   categoryButton: {
     alignItems: "center",
@@ -82,19 +86,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
     borderWidth: 2,
-    borderColor: "#E0E0E0",
+    borderColor: c.border,
   },
   categoryIcon: {
     fontSize: 24,
   },
   categoryName: {
     fontSize: 11,
-    color: "#666",
+    color: c.textSecondary,
     textAlign: "center",
     maxWidth: 60,
   },
   categoryNameActive: {
-    color: "#333",
+    color: c.text,
     fontWeight: "600",
   },
 });
