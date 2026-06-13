@@ -14,13 +14,17 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#f5f9fa",
+      "imageWidth": 642
+    },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png"
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#f5f9fa"
       },
-      "predictiveBackGestureEnabled": false,
       "package": "com.jecsoncaracut.gasto"
     },
     "web": {
@@ -50,8 +54,9 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "9f29e629-576d-4aff-acca-f1b1d057b1e9"
+        "projectId": "e87b5b92-2e63-4211-afc8-e305ccb8299b"
       }
-    }
+    },
+    "owner": "jecson-caracuts-organization"
   }
 }
