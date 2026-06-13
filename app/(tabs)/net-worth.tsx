@@ -1,7 +1,12 @@
 import {
   ACCOUNT_ICONS,
+  ACCOUNT_PROVIDERS,
   ACCOUNT_TYPES,
+  AccountProvider,
+  DEFAULT_ACCOUNT_COLOR,
+  getAccountProvider,
   getIncomeSourceIcon,
+  getMonogramFontSize,
 } from "@/constants/finance";
 import { useAccounts } from "@/hooks/useAccounts";
 import { useIncome } from "@/hooks/useIncome";
@@ -37,7 +42,28 @@ export default function NetWorthScreen() {
   const [name, setName] = useState("");
   const [type, setType] = useState<AccountType>("bank");
   const [icon, setIcon] = useState(ACCOUNT_ICONS[0]);
+  const [color, setColor] = useState(DEFAULT_ACCOUNT_COLOR);
   const [balance, setBalance] = useState("");
+  // null = no preset selected, "__custom__" = custom account, else provider name
+  const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
+
+  const isCustom = selectedProvider === "__custom__";
+
+  const selectProvider = (provider: AccountProvider) => {
+    setSelectedProvider(provider.name);
+    setName(provider.name);
+    setType(provider.type);
+    setIcon(provider.icon);
+    setColor(provider.color);
+  };
+
+  const selectCustom = () => {
+    setSelectedProvider("__custom__");
+    setName("");
+    setType("bank");
+    setIcon(ACCOUNT_ICONS[0]);
+    setColor(DEFAULT_ACCOUNT_COLOR);
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -48,18 +74,25 @@ export default function NetWorthScreen() {
 
   const openAddModal = () => {
     setEditingAccount(null);
+    setSelectedProvider(null);
     setName("");
     setType("bank");
     setIcon(ACCOUNT_ICONS[0]);
+    setColor(DEFAULT_ACCOUNT_COLOR);
     setBalance("");
     setModalVisible(true);
   };
 
   const openEditModal = (account: Account) => {
     setEditingAccount(account);
+    // Reflect the matching preset when one exists, otherwise treat as custom.
+    setSelectedProvider(
+      getAccountProvider(account.name) ? account.name : "__custom__",
+    );
     setName(account.name);
     setType(account.type);
     setIcon(account.icon);
+    setColor(account.color || DEFAULT_ACCOUNT_COLOR);
     setBalance(String(account.balance));
     setModalVisible(true);
   };
@@ -76,10 +109,17 @@ export default function NetWorthScreen() {
           name: name.trim(),
           type,
           icon,
+          color,
           balance: parsedBalance,
         });
       } else {
-        await addAccount({ name: name.trim(), type, icon, balance: parsedBalance });
+        await addAccount({
+          name: name.trim(),
+          type,
+          icon,
+          color,
+          balance: parsedBalance,
+        });
       }
       setModalVisible(false);
     } catch {
@@ -152,8 +192,20 @@ export default function NetWorthScreen() {
                 style={styles.accountRow}
                 onPress={() => openEditModal(account)}
               >
-                <View style={styles.accountIcon}>
-                  <Text style={styles.accountIconText}>{account.icon}</Text>
+                <View
+                  style={[
+                    styles.accountIcon,
+                    { backgroundColor: account.color || DEFAULT_ACCOUNT_COLOR },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.accountMonogram,
+                      { fontSize: getMonogramFontSize(account.icon) },
+                    ]}
+                  >
+                    {account.icon}
+                  </Text>
                 </View>
                 <View style={styles.accountInfo}>
                   <Text style={styles.accountName}>{account.name}</Text>
@@ -242,74 +294,140 @@ export default function NetWorthScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.modalSection}>
-              <Text style={styles.modalLabel}>Account Name</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="e.g. BPI, UnionBank, Cash"
-                placeholderTextColor="#CCC"
-                value={name}
-                onChangeText={setName}
-              />
-            </View>
-
-            <View style={styles.modalSection}>
-              <Text style={styles.modalLabel}>Type</Text>
-              <View style={styles.typeRow}>
-                {ACCOUNT_TYPES.map((t) => (
+            <ScrollView
+              style={styles.modalScroll}
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Provider</Text>
+                <View style={styles.providerGrid}>
+                  {ACCOUNT_PROVIDERS.map((p) => {
+                    const active = selectedProvider === p.name;
+                    return (
+                      <TouchableOpacity
+                        key={p.name}
+                        style={[
+                          styles.providerCard,
+                          active && styles.providerCardActive,
+                        ]}
+                        onPress={() => selectProvider(p)}
+                      >
+                        <View
+                          style={[
+                            styles.providerBadge,
+                            { backgroundColor: p.color },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.providerBadgeText,
+                              { fontSize: getMonogramFontSize(p.icon) },
+                            ]}
+                          >
+                            {p.icon}
+                          </Text>
+                        </View>
+                        <Text style={styles.providerName} numberOfLines={1}>
+                          {p.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
                   <TouchableOpacity
-                    key={t.type}
                     style={[
-                      styles.typeButton,
-                      type === t.type && styles.typeButtonActive,
+                      styles.providerCard,
+                      isCustom && styles.providerCardActive,
                     ]}
-                    onPress={() => setType(t.type)}
+                    onPress={selectCustom}
                   >
-                    <Text
+                    <View
                       style={[
-                        styles.typeText,
-                        type === t.type && styles.typeTextActive,
+                        styles.providerBadge,
+                        { backgroundColor: DEFAULT_ACCOUNT_COLOR },
                       ]}
                     >
-                      {t.label}
+                      <Text style={styles.providerBadgeText}>＋</Text>
+                    </View>
+                    <Text style={styles.providerName} numberOfLines={1}>
+                      Custom
                     </Text>
                   </TouchableOpacity>
-                ))}
+                </View>
               </View>
-            </View>
 
-            <View style={styles.modalSection}>
-              <Text style={styles.modalLabel}>Icon</Text>
-              <View style={styles.iconPicker}>
-                {ACCOUNT_ICONS.map((ic) => (
-                  <TouchableOpacity
-                    key={ic}
-                    onPress={() => setIcon(ic)}
-                    style={[
-                      styles.iconButton,
-                      icon === ic && styles.iconButtonSelected,
-                    ]}
-                  >
-                    <Text style={styles.iconButtonText}>{ic}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.modalSection}>
-              <Text style={styles.modalLabel}>Balance</Text>
-              <View style={styles.balanceInputContainer}>
-                <Text style={styles.balanceSymbol}>₱</Text>
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Account Name</Text>
                 <TextInput
-                  style={styles.balanceInput}
-                  placeholder="0.00"
+                  style={styles.input}
+                  placeholder="e.g. BPI Savings, Cash on hand"
                   placeholderTextColor="#CCC"
-                  keyboardType="decimal-pad"
-                  value={balance}
-                  onChangeText={setBalance}
+                  value={name}
+                  onChangeText={setName}
                 />
               </View>
-            </View>
+
+              {isCustom && (
+                <>
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalLabel}>Type</Text>
+                    <View style={styles.typeRow}>
+                      {ACCOUNT_TYPES.map((t) => (
+                        <TouchableOpacity
+                          key={t.type}
+                          style={[
+                            styles.typeButton,
+                            type === t.type && styles.typeButtonActive,
+                          ]}
+                          onPress={() => setType(t.type)}
+                        >
+                          <Text
+                            style={[
+                              styles.typeText,
+                              type === t.type && styles.typeTextActive,
+                            ]}
+                          >
+                            {t.label}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  <View style={styles.modalSection}>
+                    <Text style={styles.modalLabel}>Icon</Text>
+                    <View style={styles.iconPicker}>
+                      {ACCOUNT_ICONS.map((ic) => (
+                        <TouchableOpacity
+                          key={ic}
+                          onPress={() => setIcon(ic)}
+                          style={[
+                            styles.iconButton,
+                            icon === ic && styles.iconButtonSelected,
+                          ]}
+                        >
+                          <Text style={styles.iconButtonText}>{ic}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </>
+              )}
+
+              <View style={styles.modalSection}>
+                <Text style={styles.modalLabel}>Balance</Text>
+                <View style={styles.balanceInputContainer}>
+                  <Text style={styles.balanceSymbol}>₱</Text>
+                  <TextInput
+                    style={styles.balanceInput}
+                    placeholder="0.00"
+                    placeholderTextColor="#CCC"
+                    keyboardType="decimal-pad"
+                    value={balance}
+                    onChangeText={setBalance}
+                  />
+                </View>
+              </View>
+            </ScrollView>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -429,6 +547,10 @@ const styles = StyleSheet.create({
   accountIconText: {
     fontSize: 22,
   },
+  accountMonogram: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+  },
   accountInfo: {
     flex: 1,
   },
@@ -508,6 +630,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 20,
     paddingVertical: 24,
     paddingHorizontal: 16,
+    maxHeight: "88%",
+  },
+  modalScroll: {
+    flexGrow: 0,
   },
   modalHeader: {
     flexDirection: "row",
@@ -567,6 +693,42 @@ const styles = StyleSheet.create({
   typeTextActive: {
     color: "#FF6B6B",
     fontWeight: "700",
+  },
+  providerGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  providerCard: {
+    width: "22%",
+    alignItems: "center",
+    paddingVertical: 10,
+    borderRadius: 10,
+    backgroundColor: "#F8F9FA",
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  providerCardActive: {
+    borderColor: "#FF6B6B",
+    backgroundColor: "#FFF5F5",
+  },
+  providerBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 6,
+  },
+  providerBadgeText: {
+    color: "#FFFFFF",
+    fontWeight: "800",
+    fontSize: 18,
+  },
+  providerName: {
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#555",
   },
   iconPicker: {
     flexDirection: "row",

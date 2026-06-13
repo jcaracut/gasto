@@ -29,13 +29,14 @@ export const createDefaultSpace = (): Space => ({
   createdDate: new Date().toISOString(),
 });
 
-// Seeded on first run so users have something to edit immediately.
+// Seeded on first run so users have something to edit immediately. Uses each
+// provider's actual brand color + monogram (see ACCOUNT_PROVIDERS).
 const buildDefaultAccounts = (): Account[] => {
   const now = new Date().toISOString();
   return [
-    { id: generateId(), name: "BPI", type: "bank", icon: "🏦", balance: 0, updatedDate: now, sortOrder: 0 },
-    { id: generateId(), name: "Maya", type: "ewallet", icon: "💳", balance: 0, updatedDate: now, sortOrder: 1 },
-    { id: generateId(), name: "GCash", type: "ewallet", icon: "📱", balance: 0, updatedDate: now, sortOrder: 2 },
+    { id: generateId(), name: "BPI", type: "bank", icon: "BPI", color: "#B11116", balance: 0, updatedDate: now, sortOrder: 0 },
+    { id: generateId(), name: "Maya", type: "ewallet", icon: "M", color: "#00C764", balance: 0, updatedDate: now, sortOrder: 1 },
+    { id: generateId(), name: "GCash", type: "ewallet", icon: "G", color: "#0070FF", balance: 0, updatedDate: now, sortOrder: 2 },
   ];
 };
 
@@ -102,6 +103,7 @@ const createSchema = async (db: SQLite.SQLiteDatabase): Promise<void> => {
       name TEXT NOT NULL,
       type TEXT NOT NULL,
       icon TEXT NOT NULL,
+      color TEXT NOT NULL DEFAULT '#64748B',
       balance REAL NOT NULL DEFAULT 0,
       updatedDate TEXT NOT NULL,
       sortOrder INTEGER NOT NULL DEFAULT 0
@@ -111,6 +113,50 @@ const createSchema = async (db: SQLite.SQLiteDatabase): Promise<void> => {
       value TEXT
     );
   `);
+};
+
+// Brand colors + monograms for preset providers, used to backfill accounts
+// created before the `color` column existed (kept in sync with ACCOUNT_PROVIDERS).
+const PRESET_ACCOUNT_THEMES: Record<string, { icon: string; color: string }> = {
+  bpi: { icon: "BPI", color: "#B11116" },
+  maya: { icon: "M", color: "#00C764" },
+  gcash: { icon: "G", color: "#0070FF" },
+  gotyme: { icon: "GT", color: "#16284A" },
+  unionbank: { icon: "UB", color: "#F58220" },
+  metrobank: { icon: "MB", color: "#00529B" },
+  maribank: { icon: "MR", color: "#F15A29" },
+  rcbc: { icon: "RCBC", color: "#1C3F94" },
+};
+
+// Brings older account tables up to the current schema: adds the `color`
+// column when missing, then upgrades any preset accounts that still carry the
+// original emoji icon / placeholder color to their real brand color + monogram.
+const migrateAccountSchema = async (
+  db: SQLite.SQLiteDatabase,
+): Promise<void> => {
+  const columns = await db.getAllAsync<{ name: string }>(
+    "PRAGMA table_info(accounts)",
+  );
+  const hadColor = columns.some((c) => c.name === "color");
+  if (!hadColor) {
+    await db.execAsync(
+      "ALTER TABLE accounts ADD COLUMN color TEXT NOT NULL DEFAULT '#64748B'",
+    );
+    // Newly-added column means every existing account predates branding —
+    // upgrade any that match a known provider by name.
+    const rows = await db.getAllAsync<{ id: string; name: string }>(
+      "SELECT id, name FROM accounts",
+    );
+    for (const row of rows) {
+      const theme = PRESET_ACCOUNT_THEMES[row.name.trim().toLowerCase()];
+      if (theme) {
+        await db.runAsync(
+          "UPDATE accounts SET icon = ?, color = ? WHERE id = ?",
+          [theme.icon, theme.color, row.id],
+        );
+      }
+    }
+  }
 };
 
 const getMeta = async (
@@ -217,8 +263,8 @@ const migrateFromAsyncStorage = async (
     }
     for (const a of buildDefaultAccounts()) {
       await db.runAsync(
-        "INSERT OR REPLACE INTO accounts (id, name, type, icon, balance, updatedDate, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [a.id, a.name, a.type, a.icon, a.balance, a.updatedDate, a.sortOrder],
+        "INSERT OR REPLACE INTO accounts (id, name, type, icon, color, balance, updatedDate, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        [a.id, a.name, a.type, a.icon, a.color, a.balance, a.updatedDate, a.sortOrder],
       );
     }
     await db.runAsync(
@@ -239,6 +285,7 @@ export const initDatabase = async (): Promise<void> => {
     initPromise = (async () => {
       const db = await getDatabase();
       await createSchema(db);
+      await migrateAccountSchema(db);
       await migrateFromAsyncStorage(db);
     })();
   }

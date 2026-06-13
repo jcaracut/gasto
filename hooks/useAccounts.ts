@@ -39,12 +39,13 @@ export const useAccounts = () => {
         setAccounts((prev) => [...prev, newAccount]);
         const db = await getDatabase();
         await db.runAsync(
-          "INSERT INTO accounts (id, name, type, icon, balance, updatedDate, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?)",
+          "INSERT INTO accounts (id, name, type, icon, color, balance, updatedDate, sortOrder) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
           [
             newAccount.id,
             newAccount.name,
             newAccount.type,
             newAccount.icon,
+            newAccount.color,
             newAccount.balance,
             newAccount.updatedDate,
             newAccount.sortOrder,
@@ -79,11 +80,12 @@ export const useAccounts = () => {
         if (!updated) return;
         const db = await getDatabase();
         await db.runAsync(
-          "UPDATE accounts SET name = ?, type = ?, icon = ?, balance = ?, updatedDate = ?, sortOrder = ? WHERE id = ?",
+          "UPDATE accounts SET name = ?, type = ?, icon = ?, color = ?, balance = ?, updatedDate = ?, sortOrder = ? WHERE id = ?",
           [
             updated.name,
             updated.type,
             updated.icon,
+            updated.color,
             updated.balance,
             updated.updatedDate,
             updated.sortOrder,

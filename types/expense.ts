@@ -64,6 +64,7 @@ export interface Account {
   name: string;
   type: AccountType;
   icon: string;
+  color: string; // brand/accent color used for the account's icon circle
   balance: number;
   updatedDate: string; // ISO format
   sortOrder: number;
