@@ -17,7 +17,7 @@
 - **Language**: TypeScript 5.9.2 (strict mode enabled)
 - **Navigation**: Expo Router with bottom tabs
 - **State Management**: React hooks + useExpenses custom hook
-- **Data Persistence**: AsyncStorage
+- **Data Persistence**: SQLite via `expo-sqlite` (AsyncStorage retained only for the one-time data import)
 - **UI Components**: Expo Icons, React Navigation
 - **Code Quality**: ESLint (Expo config, 0 errors/warnings)
 
@@ -97,16 +97,37 @@ const { expenses, addExpense, deleteExpense, getStatistics } = useExpenses();
 
 ## Storage Layer (expo-sqlite)
 
-All data persists in a local **SQLite** database (`gasto.db`) via `expo-sqlite`, a first-party Expo module bundled into Expo Go (no custom dev build required).
+All data persists in a local **SQLite** database (`gasto.db`) via `expo-sqlite`. `expo-sqlite` is a first-party Expo module bundled into Expo Go, so no custom dev build or config plugin work is required.
 
-- `db/database.ts` is the single source of truth: `getDatabase()` (cached singleton), `initDatabase()` (schema + one-time AsyncStorage import, idempotent), plus shared helpers (`generateId`, `DEFAULT_CATEGORIES`, `createDefaultSpace`, `setMeta`).
-- Tables: `expenses`, `categories`, `budgets`, `spaces`, `income`, `accounts`, `meta` (stores `current_space_id` and the `migrated` flag). Booleans stored as `0/1`.
-- Domain hooks (`useExpenses`, `useIncome`, `useAccounts`) mirror state in React and write through to SQLite. Don't query SQLite directly from screens.
+### `db/database.ts`
 
-## Income & Net Worth
+Single source of truth for the database:
 
-- **Income** (`hooks/useIncome.ts`): global (not space-scoped) `Income` records with a fixed `IncomeSource` set (`constants/finance.ts`). Added via the Expense/Income toggle on the Add tab.
-- **Net Worth** (`hooks/useAccounts.ts`): user-addable `Account` balances (BPI/Maya/GCash seeded). Net worth = sum of balances. Managed on the **Wealth** tab (`app/(tabs)/net-worth.tsx`).
+- `getDatabase()` — cached singleton `SQLite.SQLiteDatabase` (lazy `openDatabaseAsync`).
+- `initDatabase()` — creates the schema (`CREATE TABLE IF NOT EXISTS`) and runs the one-time AsyncStorage import. Idempotent; safe to call from every hook on load.
+- One-time migration: imports any legacy `@gasto_*` AsyncStorage data into SQLite, seeds default categories / Personal space / default accounts, then sets `meta.migrated = "1"`.
+- Exports shared helpers: `generateId()`, `DEFAULT_CATEGORIES`, `createDefaultSpace()`, `setMeta()`.
+
+### Tables
+
+`expenses`, `categories`, `budgets`, `spaces`, `income`, `accounts`, and `meta` (key/value — stores `current_space_id` and the `migrated` flag). Booleans (e.g. `spaces.isArchived`) are stored as `0/1` integers and converted on read.
+
+### Hook pattern
+
+Each domain hook (`useExpenses`, `useIncome`, `useAccounts`) keeps an in-memory React state mirror for instant UI, and writes through to SQLite with `db.runAsync(...)` on every mutation. Reads use `db.getAllAsync<T>(...)`. **Don't call SQLite directly from screens** — go through the hooks.
+
+## Income Feature
+
+- Types: `Income` (`id`, `amount`, `source`, `description`, `date`) and `IncomeSource` union in `types/expense.ts`. Income is **global** — not tied to a space.
+- Source options live in `constants/finance.ts` (`INCOME_SOURCES`).
+- `hooks/useIncome.ts`: `addIncome`, `deleteIncome`, `updateIncome`, `getMonthlyIncome()`, `getIncomeByDateRange()`.
+- UI: the **Add** tab (`app/(tabs)/add-expense.tsx`) has an Expense/Income toggle. Income mode shows a simplified form (amount, source, optional description). Income history appears on the Wealth tab.
+
+## Net Worth Feature
+
+- Types: `Account` (`id`, `name`, `type`, `icon`, `balance`, `updatedDate`, `sortOrder`) and `AccountType` union. Account icons/types are in `constants/finance.ts`.
+- `hooks/useAccounts.ts`: `addAccount`, `updateAccount`, `deleteAccount`, `getNetWorth()`. BPI / Maya / GCash are seeded as defaults on first run; users can add/rename/delete any account.
+- UI: the **Wealth** tab (`app/(tabs)/net-worth.tsx`) shows total net worth, the editable accounts list (tap to edit, modal modeled on `SpaceManager`), and this month's income. The dashboard shows a net-worth card plus an income-vs-expense net-flow row.
 
 ## Build & Test
 
@@ -135,23 +156,22 @@ npm run reset-project  # Resets to initial project state (caution: deletes data)
 
 | File                              | Purpose                                             |
 | --------------------------------- | --------------------------------------------------- |
+| `db/database.ts`                  | SQLite open, schema, one-time AsyncStorage import   |
 | `hooks/useExpenses.ts`            | Complete expense management logic and state         |
-| `hooks/useAssetPrices.ts`         | Asset price fetching and conversion utilities       |
-| `types/expense.ts`                | TypeScript interfaces for all data types (incl. AI) |
+| `hooks/useIncome.ts`              | Global income management (add/delete/monthly total) |
+| `hooks/useAccounts.ts`            | Account balances + net worth calculation            |
+| `types/expense.ts`                | TypeScript interfaces for all data types            |
+| `constants/finance.ts`            | Income sources + account icon/type options          |
 | `components/ExpenseItem.tsx`      | Individual expense display component                |
 | `components/CategorySelector.tsx` | Category selection dropdown/picker                  |
 | `components/StatCard.tsx`         | Statistics display card                             |
-| `components/AIAlerts.tsx`         | Floating alerts and AI insight badges               |
-| `app/(tabs)/index.tsx`            | Home/Dashboard screen with AI widget                |
-| `app/(tabs)/add-expense.tsx`      | Add expense form                                    |
+| `app/(tabs)/index.tsx`            | Home/Dashboard (net worth + income/expense cards)   |
+| `app/(tabs)/add-expense.tsx`      | Add screen with Expense/Income toggle               |
 | `app/(tabs)/expenses.tsx`         | Expenses list with filters                          |
-| `app/(tabs)/ai-insights.tsx`      | AI Insights screen (5th tab)                        |
+| `app/(tabs)/net-worth.tsx`        | Wealth screen: net worth, accounts, income          |
 | `app/(tabs)/settings.tsx`         | Settings and configuration                          |
 | `constants/theme.ts`              | Colors, spacing, typography                         |
 | `utils/currency.ts`               | Currency formatting utilities                       |
-| `utils/inflation.ts`              | **AI: Philippines inflation data & calculations**   |
-| `utils/ai-heuristics.ts`          | **AI: Anomaly detection, forecasting, trends**      |
-| `utils/asset-rotation.ts`         | **AI: Portfolio suggestions & rotations**           |
 
 ## Common Development Tasks
 
@@ -176,12 +196,13 @@ npm run reset-project  # Resets to initial project state (caution: deletes data)
 3. Use theme colors from `constants/theme.ts`
 4. Keep component focused and single-responsibility
 
-### Working with AsyncStorage
+### Working with SQLite
 
-- Don't call AsyncStorage directly - use `useExpenses` hook
-- Always use JSON.stringify/parse for objects
-- Handle async operations in useEffect
-- Include error handling for storage failures
+- Don't call SQLite directly from screens - use the domain hooks (`useExpenses`, `useIncome`, `useAccounts`)
+- Always `await initDatabase()` before the first query in a hook's `loadData`
+- Use parameterized queries (`db.runAsync(sql, [params])`) - never string-interpolate values
+- Mirror mutations to React state for instant UI, then write through to SQLite
+- Include error handling (try/catch) for storage failures
 
 ## Development Conventions
 

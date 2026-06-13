@@ -50,11 +50,11 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ai-insights"
+        name="net-worth"
         options={{
-          title: "AI",
+          title: "Wealth",
           tabBarIcon: ({ color, size }) => (
-            <Text style={{ fontSize: size, color }}>🤖</Text>
+            <Text style={{ fontSize: size, color }}>💰</Text>
           ),
         }}
       />

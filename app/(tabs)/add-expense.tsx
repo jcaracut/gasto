@@ -1,5 +1,8 @@
 import CategorySelector from "@/components/CategorySelector";
+import { INCOME_SOURCES } from "@/constants/finance";
 import { useExpenses } from "@/hooks/useExpenses";
+import { useIncome } from "@/hooks/useIncome";
+import { IncomeSource } from "@/types/expense";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -15,22 +18,31 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function AddExpenseScreen() {
+type Mode = "expense" | "income";
+
+export default function AddScreen() {
   const router = useRouter();
   const { addExpense, categories, currentSpaceId, spaces } = useExpenses();
+  const { addIncome } = useIncome();
 
+  const [mode, setMode] = useState<Mode>("expense");
+  const [loading, setLoading] = useState(false);
+
+  // Shared
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
+
+  // Expense-only
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<
     "cash" | "card" | "digital" | "other"
   >("card");
   const [selectedSpaceId, setSelectedSpaceId] =
     useState<string>(currentSpaceId);
-  const [loading, setLoading] = useState(false);
 
-  const currentSpace = spaces.find((s) => s.id === currentSpaceId);
-  const selectedSpace = spaces.find((s) => s.id === selectedSpaceId);
+  // Income-only
+  const [incomeSource, setIncomeSource] = useState<IncomeSource>("Salary");
+
   const activeSpaces = spaces.filter((s) => !s.isArchived);
 
   // Sync selectedSpaceId with currentSpaceId whenever current space changes
@@ -38,46 +50,68 @@ export default function AddExpenseScreen() {
     setSelectedSpaceId(currentSpaceId);
   }, [currentSpaceId]);
 
-  const handleAddExpense = async () => {
-    if (!amount || !selectedCategory || !description.trim()) {
-      Alert.alert("Validation Error", "Please fill in all fields");
-      return;
-    }
+  const resetForm = () => {
+    setAmount("");
+    setDescription("");
+    setSelectedCategory(null);
+    setPaymentMethod("card");
+    setSelectedSpaceId(currentSpaceId);
+    setIncomeSource("Salary");
+  };
 
+  const handleSubmit = async () => {
     const parsedAmount = parseFloat(amount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) {
+    if (!amount || isNaN(parsedAmount) || parsedAmount <= 0) {
       Alert.alert("Validation Error", "Please enter a valid amount");
       return;
     }
 
+    if (mode === "expense") {
+      if (!selectedCategory || !description.trim()) {
+        Alert.alert("Validation Error", "Please fill in all fields");
+        return;
+      }
+    }
+
     try {
       setLoading(true);
-      await addExpense(
-        {
+      if (mode === "expense") {
+        await addExpense(
+          {
+            amount: parsedAmount,
+            category: selectedCategory!,
+            description: description.trim(),
+            date: new Date().toISOString(),
+            paymentMethod,
+          },
+          selectedSpaceId,
+        );
+      } else {
+        await addIncome({
           amount: parsedAmount,
-          category: selectedCategory,
+          source: incomeSource,
           description: description.trim(),
           date: new Date().toISOString(),
-          paymentMethod,
-        },
-        selectedSpaceId,
-      );
+        });
+      }
 
-      Alert.alert("Success", "Expense added successfully!", [
-        {
-          text: "OK",
-          onPress: () => {
-            setAmount("");
-            setDescription("");
-            setSelectedCategory(null);
-            setPaymentMethod("card");
-            setSelectedSpaceId(currentSpaceId);
-            router.back();
+      Alert.alert(
+        "Success",
+        mode === "expense"
+          ? "Expense added successfully!"
+          : "Income added successfully!",
+        [
+          {
+            text: "OK",
+            onPress: () => {
+              resetForm();
+              router.back();
+            },
           },
-        },
-      ]);
+        ],
+      );
     } catch {
-      Alert.alert("Error", "Failed to add expense. Please try again.");
+      Alert.alert("Error", `Failed to add ${mode}. Please try again.`);
     } finally {
       setLoading(false);
     }
@@ -95,44 +129,83 @@ export default function AddExpenseScreen() {
             <TouchableOpacity onPress={() => router.back()}>
               <Text style={styles.backButton}>← Back</Text>
             </TouchableOpacity>
-            <Text style={styles.title}>Add Expense</Text>
+            <Text style={styles.title}>
+              {mode === "expense" ? "Add Expense" : "Add Income"}
+            </Text>
             <View style={styles.placeholder} />
           </View>
 
-          {/* Space Selection */}
+          {/* Expense / Income Toggle */}
           <View style={styles.section}>
-            <Text style={styles.label}>Select Space</Text>
-            <View style={styles.spaceSelectorContainer}>
-              {activeSpaces.map((space) => (
+            <View style={styles.toggleContainer}>
+              {(["expense", "income"] as const).map((m) => (
                 <TouchableOpacity
-                  key={space.id}
+                  key={m}
                   style={[
-                    styles.spaceSelectorButton,
-                    selectedSpaceId === space.id &&
-                      styles.spaceSelectorButtonActive,
+                    styles.toggleButton,
+                    mode === m &&
+                      (m === "expense"
+                        ? styles.toggleButtonExpense
+                        : styles.toggleButtonIncome),
                   ]}
-                  onPress={() => setSelectedSpaceId(space.id)}
+                  onPress={() => setMode(m)}
                 >
-                  <Text style={styles.spaceSelectorIcon}>{space.icon}</Text>
                   <Text
                     style={[
-                      styles.spaceSelectorText,
-                      selectedSpaceId === space.id &&
-                        styles.spaceSelectorTextActive,
+                      styles.toggleText,
+                      mode === m && styles.toggleTextActive,
                     ]}
                   >
-                    {space.name}
+                    {m === "expense" ? "💸 Expense" : "💰 Income"}
                   </Text>
                 </TouchableOpacity>
               ))}
             </View>
           </View>
 
+          {/* Space Selection (expense only) */}
+          {mode === "expense" && (
+            <View style={styles.section}>
+              <Text style={styles.label}>Select Space</Text>
+              <View style={styles.spaceSelectorContainer}>
+                {activeSpaces.map((space) => (
+                  <TouchableOpacity
+                    key={space.id}
+                    style={[
+                      styles.spaceSelectorButton,
+                      selectedSpaceId === space.id &&
+                        styles.spaceSelectorButtonActive,
+                    ]}
+                    onPress={() => setSelectedSpaceId(space.id)}
+                  >
+                    <Text style={styles.spaceSelectorIcon}>{space.icon}</Text>
+                    <Text
+                      style={[
+                        styles.spaceSelectorText,
+                        selectedSpaceId === space.id &&
+                          styles.spaceSelectorTextActive,
+                      ]}
+                    >
+                      {space.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
           {/* Amount Input */}
           <View style={styles.section}>
             <Text style={styles.label}>Amount</Text>
             <View style={styles.amountInputContainer}>
-              <Text style={styles.currencySymbol}>₱</Text>
+              <Text
+                style={[
+                  styles.currencySymbol,
+                  mode === "income" && styles.currencySymbolIncome,
+                ]}
+              >
+                ₱
+              </Text>
               <TextInput
                 style={styles.amountInput}
                 placeholder="0.00"
@@ -146,10 +219,16 @@ export default function AddExpenseScreen() {
 
           {/* Description Input */}
           <View style={styles.section}>
-            <Text style={styles.label}>Description</Text>
+            <Text style={styles.label}>
+              Description{mode === "income" ? " (optional)" : ""}
+            </Text>
             <TextInput
               style={styles.descriptionInput}
-              placeholder="What did you spend on?"
+              placeholder={
+                mode === "expense"
+                  ? "What did you spend on?"
+                  : "Note (e.g. June paycheck)"
+              }
               placeholderTextColor="#CCC"
               value={description}
               onChangeText={setDescription}
@@ -159,57 +238,97 @@ export default function AddExpenseScreen() {
             <Text style={styles.charCount}>{description.length}/100</Text>
           </View>
 
-          {/* Category Selection */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Category</Text>
-            <CategorySelector
-              categories={categories}
-              selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
-            />
-          </View>
-
-          {/* Payment Method */}
-          <View style={styles.section}>
-            <Text style={styles.label}>Payment Method</Text>
-            <View style={styles.paymentMethods}>
-              {(["cash", "card", "digital", "other"] as const).map((method) => (
-                <TouchableOpacity
-                  key={method}
-                  style={[
-                    styles.paymentMethodButton,
-                    paymentMethod === method && styles.paymentMethodActive,
-                  ]}
-                  onPress={() => setPaymentMethod(method)}
-                >
-                  <Text
-                    style={[
-                      styles.paymentMethodText,
-                      paymentMethod === method &&
-                        styles.paymentMethodTextActive,
-                    ]}
-                  >
-                    {method === "cash"
-                      ? "💵 Cash"
-                      : method === "card"
-                        ? "💳 Card"
-                        : method === "digital"
-                          ? "📱 Digital"
-                          : "📌 Other"}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+          {/* Category (expense) or Source (income) */}
+          {mode === "expense" ? (
+            <View style={styles.section}>
+              <Text style={styles.label}>Category</Text>
+              <CategorySelector
+                categories={categories}
+                selectedCategory={selectedCategory}
+                onSelectCategory={setSelectedCategory}
+              />
             </View>
-          </View>
+          ) : (
+            <View style={styles.section}>
+              <Text style={styles.label}>Source</Text>
+              <View style={styles.sourceContainer}>
+                {INCOME_SOURCES.map(({ source, icon }) => (
+                  <TouchableOpacity
+                    key={source}
+                    style={[
+                      styles.sourceButton,
+                      incomeSource === source && styles.sourceButtonActive,
+                    ]}
+                    onPress={() => setIncomeSource(source)}
+                  >
+                    <Text style={styles.sourceIcon}>{icon}</Text>
+                    <Text
+                      style={[
+                        styles.sourceText,
+                        incomeSource === source && styles.sourceTextActive,
+                      ]}
+                    >
+                      {source}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
-          {/* Add Button */}
+          {/* Payment Method (expense only) */}
+          {mode === "expense" && (
+            <View style={styles.section}>
+              <Text style={styles.label}>Payment Method</Text>
+              <View style={styles.paymentMethods}>
+                {(["cash", "card", "digital", "other"] as const).map(
+                  (method) => (
+                    <TouchableOpacity
+                      key={method}
+                      style={[
+                        styles.paymentMethodButton,
+                        paymentMethod === method && styles.paymentMethodActive,
+                      ]}
+                      onPress={() => setPaymentMethod(method)}
+                    >
+                      <Text
+                        style={[
+                          styles.paymentMethodText,
+                          paymentMethod === method &&
+                            styles.paymentMethodTextActive,
+                        ]}
+                      >
+                        {method === "cash"
+                          ? "💵 Cash"
+                          : method === "card"
+                            ? "💳 Card"
+                            : method === "digital"
+                              ? "📱 Digital"
+                              : "📌 Other"}
+                      </Text>
+                    </TouchableOpacity>
+                  ),
+                )}
+              </View>
+            </View>
+          )}
+
+          {/* Submit Button */}
           <TouchableOpacity
-            style={[styles.addButton, loading && styles.addButtonDisabled]}
-            onPress={handleAddExpense}
+            style={[
+              styles.addButton,
+              mode === "income" && styles.addButtonIncome,
+              loading && styles.addButtonDisabled,
+            ]}
+            onPress={handleSubmit}
             disabled={loading}
           >
             <Text style={styles.addButtonText}>
-              {loading ? "Adding..." : "Add Expense"}
+              {loading
+                ? "Adding..."
+                : mode === "expense"
+                  ? "Add Expense"
+                  : "Add Income"}
             </Text>
           </TouchableOpacity>
 
@@ -250,6 +369,35 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     width: 50,
+  },
+  toggleContainer: {
+    flexDirection: "row",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#EFEFEF",
+    padding: 4,
+    gap: 4,
+  },
+  toggleButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  toggleButtonExpense: {
+    backgroundColor: "#FFF5F5",
+  },
+  toggleButtonIncome: {
+    backgroundColor: "#F0FFF4",
+  },
+  toggleText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#999",
+  },
+  toggleTextActive: {
+    color: "#333",
   },
   spaceSelectorContainer: {
     flexDirection: "row",
@@ -312,6 +460,9 @@ const styles = StyleSheet.create({
     color: "#FF6B6B",
     marginRight: 4,
   },
+  currencySymbolIncome: {
+    color: "#4CAF50",
+  },
   amountInput: {
     flex: 1,
     height: 50,
@@ -336,6 +487,41 @@ const styles = StyleSheet.create({
     color: "#CCC",
     marginTop: 4,
     textAlign: "right",
+  },
+  sourceContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    marginHorizontal: -8,
+  },
+  sourceButton: {
+    width: "45%",
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 12,
+    marginHorizontal: 8,
+    marginVertical: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#EFEFEF",
+  },
+  sourceButtonActive: {
+    borderColor: "#4CAF50",
+    backgroundColor: "#F0FFF4",
+  },
+  sourceIcon: {
+    fontSize: 20,
+    marginRight: 8,
+  },
+  sourceText: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#999",
+  },
+  sourceTextActive: {
+    color: "#4CAF50",
+    fontWeight: "700",
   },
   paymentMethods: {
     flexDirection: "row",
@@ -375,6 +561,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6B6B",
     borderRadius: 10,
     alignItems: "center",
+  },
+  addButtonIncome: {
+    backgroundColor: "#4CAF50",
   },
   addButtonDisabled: {
     opacity: 0.6,

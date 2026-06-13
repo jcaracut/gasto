@@ -1,10 +1,9 @@
 import ExpenseItem from "@/components/ExpenseItem";
 import StatCard from "@/components/StatCard";
-import { useAssetPrices } from "@/hooks/useAssetPrices";
+import { useAccounts } from "@/hooks/useAccounts";
 import { useExpenses } from "@/hooks/useExpenses";
-import { forecastMonthlySpending } from "@/utils/ai-heuristics";
+import { useIncome } from "@/hooks/useIncome";
 import { formatAmount, formatCurrency } from "@/utils/currency";
-import { getInflationTrend } from "@/utils/inflation";
 import { useFocusEffect } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import React, { useCallback, useMemo, useState } from "react";
@@ -21,7 +20,8 @@ type FilterType = "all" | "week" | "month" | "year" | "specific-month";
 
 export default function HomeScreen() {
   const { expenses, categories, currentSpaceId, refreshData } = useExpenses();
-  const { prices: assetPrices, syncPrices } = useAssetPrices();
+  const { getNetWorth, refreshAccounts } = useAccounts();
+  const { getMonthlyIncome, refreshIncome } = useIncome();
   const router = useRouter();
   const [filterType, setFilterType] = useState<FilterType>("month");
 
@@ -34,9 +34,9 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       refreshData();
-      // Attempt to sync prices on focus
-      syncPrices();
-    }, [refreshData, syncPrices]),
+      refreshAccounts();
+      refreshIncome();
+    }, [refreshData, refreshAccounts, refreshIncome]),
   );
 
   // Filter expenses based on time period and current space
@@ -140,25 +140,25 @@ export default function HomeScreen() {
     return categories.find((cat) => cat.name === categoryName);
   };
 
-  // Calculate AI insights
-  const aiInsights = useMemo(() => {
-    const spaceExpenses = expenses.filter(
-      (exp) => exp.spaceId === currentSpaceId,
-    );
+  // Net worth + this-month money flow for the dashboard cards
+  const netWorth = getNetWorth();
+  const monthlyIncome = getMonthlyIncome();
 
-    if (spaceExpenses.length === 0) {
-      return null;
-    }
+  const monthlyExpenses = useMemo(() => {
+    const now = new Date();
+    return expenses
+      .filter((exp) => {
+        const d = new Date(exp.date);
+        return (
+          exp.spaceId === currentSpaceId &&
+          d.getMonth() === now.getMonth() &&
+          d.getFullYear() === now.getFullYear()
+        );
+      })
+      .reduce((sum, exp) => sum + exp.amount, 0);
+  }, [expenses, currentSpaceId]);
 
-    const inflationTrend = getInflationTrend();
-    const spendingForecast = forecastMonthlySpending(spaceExpenses, true);
-
-    return {
-      inflationTrend,
-      spendingForecast,
-      assetPrices,
-    };
-  }, [expenses, currentSpaceId, assetPrices]);
+  const netFlow = monthlyIncome - monthlyExpenses;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -297,80 +297,50 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* AI Insights Widget */}
-        {aiInsights && (
-          <View style={styles.section}>
-            <View style={styles.aiWidgetHeader}>
-              <Text style={styles.sectionTitle}>🤖 AI Insights</Text>
-              <TouchableOpacity
-                onPress={() => router.push("/(tabs)/ai-insights")}
-              >
-                <Text style={styles.seeAllLink}>More</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.aiWidgetContainer}>
-              {/* Inflation Card */}
-              <View style={styles.aiCard}>
-                <Text style={styles.aiCardLabel}>Inflation Rate</Text>
-                <Text style={styles.aiCardValue}>
-                  {aiInsights.inflationTrend.currentRate}%
-                </Text>
-                <Text style={styles.aiCardTrend}>
-                  Trend: {aiInsights.inflationTrend.trend.toUpperCase()} (
-                  {aiInsights.inflationTrend.monthChangePercent > 0 ? "+" : ""}
-                  {aiInsights.inflationTrend.monthChangePercent.toFixed(1)}%)
-                </Text>
-              </View>
-
-              {/* Forecast Card */}
-              <View style={styles.aiCard}>
-                <Text style={styles.aiCardLabel}>Next Month Est.</Text>
-                <Text style={styles.aiCardValue}>
-                  ₱
-                  {aiInsights.spendingForecast.predictedAmount.toLocaleString()}
-                </Text>
-                <Text style={styles.aiCardTrend}>
-                  Confidence:{" "}
-                  {Math.round(aiInsights.spendingForecast.confidence * 100)}%
-                </Text>
-              </View>
-
-              {/* Bitcoin Price Card */}
-              {aiInsights.assetPrices.BTC && (
-                <View style={styles.aiCard}>
-                  <Text style={styles.aiCardLabel}>Bitcoin</Text>
-                  <Text style={styles.aiCardValue}>
-                    ₱{aiInsights.assetPrices.BTC.price.toLocaleString()}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.aiCardTrend,
-                      {
-                        color:
-                          aiInsights.assetPrices.BTC.change > 0
-                            ? "#4CAF50"
-                            : "#FF6B6B",
-                      },
-                    ]}
-                  >
-                    {aiInsights.assetPrices.BTC.change > 0 ? "+" : ""}
-                    {aiInsights.assetPrices.BTC.change.toFixed(2)}%
-                  </Text>
-                </View>
-              )}
-            </View>
-
-            <TouchableOpacity
-              style={styles.aiCTA}
-              onPress={() => router.push("/(tabs)/ai-insights")}
-            >
-              <Text style={styles.aiCTAText}>
-                💡 Get Asset Rotation Suggestions →
-              </Text>
+        {/* Net Worth Widget */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Net Worth</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/net-worth")}>
+              <Text style={styles.seeAllLink}>Manage</Text>
             </TouchableOpacity>
           </View>
-        )}
+
+          <TouchableOpacity
+            style={styles.netWorthCard}
+            onPress={() => router.push("/(tabs)/net-worth")}
+          >
+            <Text style={styles.netWorthLabel}>Total across all accounts</Text>
+            <Text style={styles.netWorthValue}>{formatCurrency(netWorth)}</Text>
+          </TouchableOpacity>
+
+          <View style={styles.flowRow}>
+            <View style={[styles.flowCard, { backgroundColor: "#F0FFF4" }]}>
+              <Text style={styles.flowLabel}>Income (mo.)</Text>
+              <Text style={[styles.flowValue, { color: "#4CAF50" }]}>
+                {formatCurrency(monthlyIncome)}
+              </Text>
+            </View>
+            <View style={[styles.flowCard, { backgroundColor: "#FFF5F5" }]}>
+              <Text style={styles.flowLabel}>Expenses (mo.)</Text>
+              <Text style={[styles.flowValue, { color: "#FF6B6B" }]}>
+                {formatCurrency(monthlyExpenses)}
+              </Text>
+            </View>
+            <View style={[styles.flowCard, { backgroundColor: "#F5F7FF" }]}>
+              <Text style={styles.flowLabel}>Net Flow</Text>
+              <Text
+                style={[
+                  styles.flowValue,
+                  { color: netFlow >= 0 ? "#4CAF50" : "#FF6B6B" },
+                ]}
+              >
+                {netFlow >= 0 ? "+" : "-"}
+                {formatCurrency(Math.abs(netFlow))}
+              </Text>
+            </View>
+          </View>
+        </View>
 
         {/* Category Breakdown */}
         <View style={styles.section}>
@@ -631,52 +601,40 @@ const styles = StyleSheet.create({
   bottomPadding: {
     height: 60,
   },
-  aiWidgetHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+  netWorthCard: {
+    backgroundColor: "#2D3748",
+    borderRadius: 12,
+    padding: 20,
     marginBottom: 12,
   },
-  aiWidgetContainer: {
+  netWorthLabel: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 6,
+  },
+  netWorthValue: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFFFFF",
+  },
+  flowRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
     gap: 8,
   },
-  aiCard: {
+  flowCard: {
     flex: 1,
-    backgroundColor: "#667eea",
     borderRadius: 12,
     padding: 12,
     justifyContent: "center",
   },
-  aiCardLabel: {
+  flowLabel: {
     fontSize: 11,
-    color: "rgba(255, 255, 255, 0.7)",
+    color: "#666",
     marginBottom: 4,
     fontWeight: "500",
   },
-  aiCardValue: {
-    fontSize: 16,
+  flowValue: {
+    fontSize: 14,
     fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  aiCardTrend: {
-    fontSize: 10,
-    color: "rgba(255, 255, 255, 0.8)",
-    fontStyle: "italic",
-  },
-  aiCTA: {
-    backgroundColor: "#667eea",
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    alignItems: "center",
-  },
-  aiCTAText: {
-    color: "#FFFFFF",
-    fontWeight: "600",
-    fontSize: 13,
   },
 });
